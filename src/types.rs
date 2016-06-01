@@ -1,3 +1,6 @@
+extern crate libc;
+
+use std::rc::Rc;
 
 // Data types in this library are all *logical*. They can be expressed as
 // either a primitive physical type (bytes or bits of some fixed size), a
@@ -77,12 +80,15 @@ pub enum Ty {
   USER = 60
 }
 
-pub struct DataType<'a> {
-  pub ty: Ty,
-  pub children: Vec<*const Field<'a>>,
-}
+pub enum DataType {}
+pub enum Field {}
 
-pub struct Field<'a> {
-  pub name: &'a str,
+extern "C" {
+  pub fn new_data_type(ty: Ty) -> *const DataType;
+  pub fn value_size(data_type: *const DataType) -> i32;
+  pub fn release_data_type(data_type: *const DataType);
 
+  pub fn new_field(name: *const libc::c_char, data_type: *const DataType, nullable: bool) -> *const Field;
+  pub fn field_to_string(field: *const Field) -> *const libc::c_char;
+  pub fn release_field(field: *const Field);
 }
