@@ -2,52 +2,68 @@
 
 using namespace arrow;
 
-struct DataTypePtr {
-  std::shared_ptr<DataType> ptr;
+struct DataTypeBox {
+  std::shared_ptr<DataType> sp;
+  DataType* dt;
 };
 
-struct FieldPtr {
-  std::shared_ptr<Field> ptr;
+struct FieldBox {
+  std::shared_ptr<Field> sp;
+  Field* field;
 };
 
 extern "C" {
-  DataTypePtr* new_data_type(Type::type ty) {
-    DataTypePtr* dt = new DataTypePtr;
+  DataTypeBox* new_data_type(Type::type ty) {
+    DataTypeBox* dt = new DataTypeBox;
 
     switch (ty) {
       case Type::INT32: {
-        dt->ptr = std::make_shared<Int32Type>();
+        dt->sp = std::make_shared<Int32Type>();
+        dt->dt = dt->sp.get();
         break;
       }
       default: {
-        dt->ptr = nullptr;
+        dt->dt = nullptr; // TODO: exception
       }
     }
 
     return dt;
   }
 
-  int value_size(DataTypePtr* dt) {
-    return dt->ptr->value_size();
+  int data_type_equals(const DataTypeBox* dt1, const DataTypeBox* dt2) {
+    return dt1->dt->Equals(dt2->dt);
   }
 
-  void release_data_type(DataTypePtr * dt) {
+  int value_size(DataTypeBox* dt) {
+    return dt->dt->value_size();
+  }
+
+  const char* data_type_to_string(DataTypeBox* dt) {
+    return dt->dt->ToString().c_str();
+  }
+
+  void release_data_type(DataTypeBox * dt) {
     if (dt) {
       delete dt;
     }
   }
 
-  FieldPtr* new_field(char* name, DataTypePtr* data_type, bool nullable) {
-    FieldPtr* fp = new FieldPtr;
-    fp->ptr = std::make_shared<Field>(std::string(name), data_type->ptr, nullable);
+  FieldBox* new_field(char* name, DataTypeBox* data_type, bool nullable) {
+    FieldBox* fp = new FieldBox;
+    fp->sp = std::make_shared<Field>(std::string(name), data_type->sp, nullable);
+    fp->field = fp->sp.get();
     return fp;
   }
 
-  const char* field_to_string(FieldPtr* fp) {
-    return fp->ptr->ToString().c_str();
+  int field_equals(const FieldBox* f1, const FieldBox* f2) {
+    return f1->field->Equals(*(f2->field));
   }
 
-  void release_field(FieldPtr* fp) {
+  const char* field_to_string(FieldBox* fp) {
+    return fp->field->ToString().c_str();
+  }
+
+  void release_field(FieldBox* fp) {
     if (fp) {
       delete fp;
     }

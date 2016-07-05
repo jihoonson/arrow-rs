@@ -85,10 +85,13 @@ pub enum Field {}
 
 extern "C" {
   pub fn new_data_type(ty: Ty) -> *const DataType;
+  pub fn data_type_equals(data_type1: *const DataType, data_type2: *const DataType) -> bool;
   pub fn value_size(data_type: *const DataType) -> i32;
+  pub fn data_type_to_string(data_type: *const DataType) -> *const libc::c_char;
   pub fn release_data_type(data_type: *const DataType);
 
   pub fn new_field(name: *const libc::c_char, data_type: *const DataType, nullable: bool) -> *const Field;
+  pub fn field_equals(field1: *const Field, field2: *const Field) -> bool;
   pub fn field_to_string(field: *const Field) -> *const libc::c_char;
   pub fn release_field(field: *const Field);
 }
