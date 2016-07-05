@@ -84,7 +84,12 @@ pub enum DataType {}
 pub enum Field {}
 
 extern "C" {
-  pub fn new_data_type(ty: Ty) -> *const DataType;
+  pub fn new_primitive_type(ty: Ty) -> *const DataType;
+  pub fn new_list_type(data_type: *const DataType) -> *const DataType;
+  pub fn new_binary_type() -> *const DataType;
+  pub fn new_string_type() -> *const DataType;
+  pub fn new_struct_type(field_num: i32, fields: &[*const Field]) -> *const DataType;
+
   pub fn data_type_equals(data_type1: *const DataType, data_type2: *const DataType) -> bool;
   pub fn value_size(data_type: *const DataType) -> i32;
   pub fn data_type_to_string(data_type: *const DataType) -> *const libc::c_char;
