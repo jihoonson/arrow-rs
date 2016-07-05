@@ -38,4 +38,29 @@ mod tests {
       types::release_data_type(dt2);
     }
   }
+  
+  #[test]
+  fn test_schema() {
+    unsafe {
+      let int_type = types::new_primitive_type(types::Ty::INT32);
+      let float_type = types::new_primitive_type(types::Ty::FLOAT);
+      let string_type = types::new_string_type();
+
+      let f0 = types::new_field(CString::new("f0").unwrap().as_ptr(), int_type, false);
+      let f1 = types::new_field(CString::new("f1").unwrap().as_ptr(), float_type, false);
+      let f2 = types::new_field(CString::new("f2").unwrap().as_ptr(), string_type, false);
+      let fields = [f0, f1, f2];
+
+
+      let s = types::new_schema(3, &fields);
+      types::release_schema(s);
+
+      types::release_field(f0);
+      types::release_field(f1);
+      types::release_field(f2);
+      types::release_data_type(string_type);
+      types::release_data_type(float_type);
+      types::release_data_type(int_type);
+    }
+  }
 }

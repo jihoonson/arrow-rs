@@ -1,4 +1,8 @@
+#ifndef TYPE_H
+#define TYPE_H
+
 #include "arrow/type.h"
+#include "arrow/schema.h"
 
 using namespace arrow;
 
@@ -10,6 +14,11 @@ struct DataTypeBox {
 struct FieldBox {
   std::shared_ptr<Field> sp;
   Field* field;
+};
+
+struct SchemaBox {
+  std::shared_ptr<Schema> sp;
+  Schema* schema;
 };
 
 extern "C" {
@@ -65,22 +74,6 @@ extern "C" {
         sp = std::make_shared<DoubleType>();
         break;
       }
-//      case Type::LIST: {
-//        sp = std::make_shared<ListType>();
-//        break;
-//      }
-//      case Type::BINARY: {
-//        sp = std::make_shared<BinaryType>();
-//        break;
-//      }
-//      case Type::STRING: {
-//        sp = std::make_shared<StringType>();
-//        break;
-//      }
-//      case Type::STRUCT: {
-//        sp = std::make_shared<StructType>();
-//        break;
-//      }
       default: {
         return nullptr; // TODO: exception
       }
@@ -123,7 +116,6 @@ extern "C" {
     box->dt = box->sp.get();
     return box;
   }
-
   int data_type_equals(const DataTypeBox* dt1, const DataTypeBox* dt2) {
     return dt1->dt->Equals(dt2->dt);
   }
@@ -162,4 +154,24 @@ extern "C" {
       delete fp;
     }
   }
+
+  SchemaBox* new_schema(int field_num, FieldBox* fields []) {
+    std::vector<std::shared_ptr<Field>> vec;
+    for (int i = 0; i < field_num; i++) {
+      vec.push_back(fields[i]->sp);
+    }
+
+    SchemaBox* box = new SchemaBox;
+    box->sp = std::make_shared<Schema>(vec);
+    box->schema = box->sp.get();
+    return box;
+  }
+
+  void release_schema(SchemaBox* schema) {
+    if (schema) {
+      delete schema;
+    }
+  }
 }
+
+#endif

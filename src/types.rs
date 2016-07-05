@@ -1,7 +1,5 @@
 extern crate libc;
 
-use std::rc::Rc;
-
 // Data types in this library are all *logical*. They can be expressed as
 // either a primitive physical type (bytes or bits of some fixed size), a
 // nested type consisting of other data types, or another data type (e.g. a
@@ -82,6 +80,7 @@ pub enum Ty {
 
 pub enum DataType {}
 pub enum Field {}
+pub enum Schema {}
 
 extern "C" {
   pub fn new_primitive_type(ty: Ty) -> *const DataType;
@@ -99,4 +98,7 @@ extern "C" {
   pub fn field_equals(field1: *const Field, field2: *const Field) -> bool;
   pub fn field_to_string(field: *const Field) -> *const libc::c_char;
   pub fn release_field(field: *const Field);
+
+  pub fn new_schema(field_num: i32, fields: &[*const Field]) -> *const Schema;
+  pub fn release_schema(schema: *const Schema);
 }
