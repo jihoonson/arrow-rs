@@ -3,6 +3,7 @@ extern crate libc;
 
 mod common;
 mod types;
+mod memory_pool;
 
 #[cfg(test)]
 mod tests {
@@ -38,7 +39,7 @@ mod tests {
       types::release_data_type(dt2);
     }
   }
-  
+
   #[test]
   fn test_schema() {
     unsafe {
@@ -61,6 +62,33 @@ mod tests {
       types::release_data_type(string_type);
       types::release_data_type(float_type);
       types::release_data_type(int_type);
+    }
+  }
+
+  #[test]
+  fn test_mem_pool() {
+    use memory_pool;
+    use std::ptr;
+    use libc;
+    use common::status;
+    use std::mem;
+
+    unsafe {
+      let pool = memory_pool::default_mem_pool();
+      let buffer: *mut u8 = ptr::null_mut();
+      let mut status = status::new_status();
+
+      let alloc_result = memory_pool::mem_alloc(pool, buffer, 64, status);
+      assert!(alloc_result);
+      assert_eq!(64, memory_pool::num_bytes_alloc(pool));
+      assert!(status::ok(status));
+      status::release_status(status);
+
+      memory_pool::mem_free(pool, buffer, 32);
+      assert_eq!(32, memory_pool::num_bytes_alloc(pool));
+
+      memory_pool::mem_free(pool, buffer, 32);
+      assert_eq!(0, memory_pool::num_bytes_alloc(pool));
     }
   }
 }

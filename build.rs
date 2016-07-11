@@ -22,5 +22,7 @@ fn main() {
   gcc::Config::new()
       .cpp(true)
       .file("src/type.cc")
-      .compile("libtype.a");
+      .file("src/common/status.cc")
+      .file("src/memory_pool.cc")
+      .compile("libtargetwrapper.a");
 }

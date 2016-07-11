@@ -82,6 +82,9 @@ pub enum DataType {}
 pub enum Field {}
 pub enum Schema {}
 
+// TODO: add safe APIs
+// TODO: singleton instances of types
+
 extern "C" {
   pub fn new_primitive_type(ty: Ty) -> *const DataType;
   pub fn new_list_type(data_type: *const DataType) -> *const DataType;
@@ -100,5 +103,7 @@ extern "C" {
   pub fn release_field(field: *const Field);
 
   pub fn new_schema(field_num: i32, fields: &[*const Field]) -> *const Schema;
+  pub fn schema_equals(s1: *const Schema, s2: *const Schema) -> bool;
+  pub fn schema_to_string(schema: *const Schema) -> *const libc::c_char;
   pub fn release_schema(schema: *const Schema);
 }

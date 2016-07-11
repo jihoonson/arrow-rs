@@ -75,7 +75,7 @@ extern "C" {
         break;
       }
       default: {
-        return nullptr; // TODO: exception
+        return nullptr;
       }
     }
 
@@ -116,7 +116,7 @@ extern "C" {
     box->dt = box->sp.get();
     return box;
   }
-  int data_type_equals(const DataTypeBox* dt1, const DataTypeBox* dt2) {
+  bool data_type_equals(const DataTypeBox* dt1, const DataTypeBox* dt2) {
     return dt1->dt->Equals(dt2->dt);
   }
 
@@ -141,7 +141,7 @@ extern "C" {
     return fp;
   }
 
-  int field_equals(const FieldBox* f1, const FieldBox* f2) {
+  bool field_equals(const FieldBox* f1, const FieldBox* f2) {
     return f1->field->Equals(*(f2->field));
   }
 
@@ -165,6 +165,14 @@ extern "C" {
     box->sp = std::make_shared<Schema>(vec);
     box->schema = box->sp.get();
     return box;
+  }
+
+  bool schema_equals(SchemaBox* s1, SchemaBox* s2) {
+    return s1->schema->Equals(*(s2->schema));
+  }
+
+  const char* schema_to_string(SchemaBox* schema) {
+    return schema->schema->ToString().c_str();
   }
 
   void release_schema(SchemaBox* schema) {
