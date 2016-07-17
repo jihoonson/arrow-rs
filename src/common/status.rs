@@ -18,7 +18,7 @@ pub enum Status {}
 
 extern "C" {
   pub fn new_status() -> *mut Status;
-  pub fn release_status(status: *mut Status);
+  pub fn release_status(status: *const Status);
 
   pub fn ok(status: *const Status) -> bool;
   pub fn is_oom(status: *const Status) -> bool;

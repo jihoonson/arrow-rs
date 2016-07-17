@@ -2,7 +2,6 @@ use common::status;
 use libc;
 
 pub enum MemoryPool {}
-pub enum AllocResult {}
 
 // TODO: add safe APIs
 
