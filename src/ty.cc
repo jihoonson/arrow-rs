@@ -80,28 +80,28 @@ DataTypeBox* new_primitive_type(Type::type ty) {
 
   DataTypeBox* dt = new DataTypeBox;
   dt->sp = sp;
-  dt->dt = sp.get();
+  dt->p = sp.get();
   return dt;
 }
 
 DataTypeBox* new_list_type(DataTypeBox* value_type) {
   DataTypeBox* box = new DataTypeBox;
   box->sp = std::make_shared<ListType>(value_type->sp);
-  box->dt = box->sp.get();
+  box->p = box->sp.get();
   return box;
 }
 
 DataTypeBox* new_binary_type() {
   DataTypeBox* box = new DataTypeBox;
   box->sp = std::make_shared<BinaryType>();
-  box->dt = box->sp.get();
+  box->p = box->sp.get();
   return box;
 }
 
 DataTypeBox* new_string_type() {
   DataTypeBox* box = new DataTypeBox;
   box->sp = std::make_shared<StringType>();
-  box->dt = box->sp.get();
+  box->p = box->sp.get();
   return box;
 }
 
@@ -112,19 +112,19 @@ DataTypeBox* new_struct_type(int field_num, FieldBox* fields []) {
   }
   DataTypeBox* box = new DataTypeBox;
   box->sp = std::make_shared<StructType>(vec);
-  box->dt = box->sp.get();
+  box->p = box->sp.get();
   return box;
 }
 bool data_type_equals(const DataTypeBox* dt1, const DataTypeBox* dt2) {
-  return dt1->dt->Equals(dt2->dt);
+  return dt1->p->Equals(dt2->p);
 }
 
 int value_size(DataTypeBox* dt) {
-  return dt->dt->value_size();
+  return dt->p->value_size();
 }
 
 const char* data_type_to_string(DataTypeBox* dt) {
-  return dt->dt->ToString().c_str();
+  return dt->p->ToString().c_str();
 }
 
 void release_data_type(DataTypeBox * dt) {
@@ -136,16 +136,16 @@ void release_data_type(DataTypeBox * dt) {
 FieldBox* new_field(char* name, DataTypeBox* data_type, bool nullable) {
   FieldBox* fp = new FieldBox;
   fp->sp = std::make_shared<Field>(std::string(name), data_type->sp, nullable);
-  fp->field = fp->sp.get();
+  fp->p = fp->sp.get();
   return fp;
 }
 
 bool field_equals(const FieldBox* f1, const FieldBox* f2) {
-  return f1->field->Equals(*(f2->field));
+  return f1->p->Equals(*(f2->p));
 }
 
 const char* field_to_string(FieldBox* fp) {
-  return fp->field->ToString().c_str();
+  return fp->p->ToString().c_str();
 }
 
 void release_field(FieldBox* fp) {
@@ -162,16 +162,16 @@ SchemaBox* new_schema(int field_num, FieldBox* fields []) {
 
   SchemaBox* box = new SchemaBox;
   box->sp = std::make_shared<Schema>(vec);
-  box->schema = box->sp.get();
+  box->p = box->sp.get();
   return box;
 }
 
 bool schema_equals(SchemaBox* s1, SchemaBox* s2) {
-  return s1->schema->Equals(*(s2->schema));
+  return s1->p->Equals(*(s2->p));
 }
 
 const char* schema_to_string(SchemaBox* schema) {
-  return schema->schema->ToString().c_str();
+  return schema->p->ToString().c_str();
 }
 
 void release_schema(SchemaBox* schema) {

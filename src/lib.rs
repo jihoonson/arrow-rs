@@ -1,5 +1,8 @@
 #![feature(cstr_from_bytes)]
+#![feature(alloc)]
+#![feature(heap_api)]
 extern crate libc;
+extern crate alloc;
 
 mod common;
 mod types;
@@ -105,5 +108,52 @@ mod tests {
   #[test]
   fn test_array() {
     use array;
+    use types::primitive;
+    use common::memory_pool;
+    use common::status;
+    use alloc::heap;
+    use std::ptr;
+    use ty;
+    use buffer;
+
+    unsafe {
+      let pool = memory_pool::default_mem_pool();
+      let uint8 = ty::new_primitive_type(ty::Ty::UINT8);
+      let builder = primitive::new_u8_arr_builder(pool, uint8);
+
+      let s = primitive::init_u8_arr_builder(builder, 32);
+      assert!(status::ok(s));
+      status::release_status(s);
+
+      let mut values = heap::allocate(32, 32);
+      for i in 0..32 {
+        ptr::write(values.offset(i), i as u8);
+      }
+
+      let s = primitive::append_u8_arr_builder(builder, values, 32, ptr::null());
+      assert!(status::ok(s));
+      status::release_status(s);
+
+      let arr = primitive::finish_u8_arr_builder(builder);
+
+      let u8_ty = ty::new_primitive_type(ty::Ty::UINT8);
+      assert!(ty::data_type_equals(u8_ty, array::arr_type(arr)));
+      ty::release_data_type(u8_ty);
+
+      assert_eq!(32, array::arr_len(arr));
+
+      for i in 0..32 {
+        assert_eq!(i as u8, primitive::u8_arr_value(arr, i));
+      }
+
+      // TODO: validate the following line
+      memory_pool::mem_free(pool, buffer::buf_mut_data(primitive::arr_data(arr)), 32);
+
+      array::release_arr(arr);
+      heap::deallocate(values, 32, 32);
+
+      // test common::tests::test_mem_pool ... FAILED
+      // thread 'common::tests::test_mem_pool' panicked at 'assertion failed: `(left == right)` (left: `64`, right: `128`)', src/common/mod.rs:22
+    }
   }
 }

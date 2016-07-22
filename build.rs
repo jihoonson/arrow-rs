@@ -24,6 +24,7 @@ fn main() {
       .file("src/ty.cc")
       .file("src/common/status.cc")
       .file("src/common/memory_pool.cc")
+      .file("src/types/primitive.cc")
       .file("src/array.cc")
       .file("src/buffer.cc")
       .compile("libtargetwrapper.a");

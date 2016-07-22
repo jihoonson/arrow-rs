@@ -6,17 +6,17 @@
 
 struct ColumnBox {
   std::shared_ptr<Column> sp;
-  Column* column;
+  Column* p;
 };
 
 struct RowBatchBox {
   std::shared_ptr<RowBatch> sp;
-  RowBatch* row_batch;
+  RowBatch* p;
 }
 
 struct TableBox {
   std::shared_ptr<Table> sp;
-  Table* table;
+  Table* p;
 }
 
 extern "C" {

@@ -1,4 +1,5 @@
 use ty;
+use buffer::Buffer;
 
 pub enum Array {}
 
@@ -12,4 +13,5 @@ extern "C" {
   pub fn arr_equals(arr1: *const Array, arr2: *const Array) -> bool;
   pub fn arr_range_equals(arr1: *const Array, arr2: *const Array, start: i32, end: i32, other_start: i32) -> bool;
   pub fn new_null_arr(ty: *const ty::DataType, length: i32) -> *const Array;
+  pub fn release_arr(arr: *const Array);
 }

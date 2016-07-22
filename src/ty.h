@@ -8,17 +8,17 @@ using namespace arrow;
 
 struct DataTypeBox {
   std::shared_ptr<DataType> sp;
-  DataType* dt;
+  DataType* p;
 };
 
 struct FieldBox {
   std::shared_ptr<Field> sp;
-  Field* field;
+  Field* p;
 };
 
 struct SchemaBox {
   std::shared_ptr<Schema> sp;
-  Schema* schema;
+  Schema* p;
 };
 
 extern "C" {
