@@ -69,7 +69,56 @@ extern "C" {
   }
 
   // Table
+  TableBox* new_table(const char* name, SchemaBox* schema, ColumnBox* columns[], int num_cols) {
+    std::vector<std::shared_ptr<Column>> col_vec;
+    for (int i = 0; i < num_cols; i++) {
+      col_vec.push_back(columns[i]->sp);
+    }
 
+    TableBox* table = new TableBox;
+    table->sp = std::make_shared<Table>(std::string(name), schema->sp, col_vec);
+    table->p = table->sp.get();
+    return table;
+  }
+
+  void release_table(TableBox* table) {
+    if (table) {
+      delete table;
+    }
+  }
+
+  const char* table_name(TableBox* table) {
+    return table->p->name().c_str();
+  }
+
+  SchemaBox* table_schema(TableBox* table) {
+    SchemaBox* schema = new SchemaBox;
+    schema->sp = table->p->schema();
+    schema->p = schema->sp.get();
+    return schema;
+  }
+
+  ColumnBox* table_column(TableBox* table, int i) {
+    ColumnBox* column = new ColumnBox;
+    column->sp = table->p->column(i);
+    column->p = column->sp.get();
+
+    return column;
+  }
+
+  int table_num_cols(TableBox* table) {
+    return table->p->num_columns();
+  }
+
+  int64_t table_num_rows(TableBox* table) {
+    return table->p->num_rows();
+  }
+
+  StatusBox* validate_table_cols(TableBox* table) {
+    StatusBox* status = new StatusBox;
+    status->status = table->p->ValidateColumns();
+    return status;
+  }
 }
 
 #endif

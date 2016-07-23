@@ -209,4 +209,38 @@ mod tests {
       ty::release_data_type(f32_ty);
     }
   }
+
+  #[test]
+  fn test_table() {
+    unsafe {
+      let pool = memory_pool::default_mem_pool();
+      let f32_ty = ty::new_primitive_type(ty::Ty::FLOAT);
+      let f1 = ty::new_field(CString::new("f1").unwrap().as_ptr(), f32_ty, false);
+      let fields = [f1];
+      let schema = ty::new_schema(1, &fields);
+      let values: Vec<f32> = (0..32).map(|i| i as f32).collect();
+
+      let builder = primitive::new_f32_arr_builder(pool, f32_ty);
+      let s = primitive::append_f32_arr_builder(builder, values.as_ptr(), 32, ptr::null());
+      status::release_status(s);
+      let arrs = [primitive::finish_f32_arr_builder(builder)];
+      let cols = [column::new_column_from_arr(f1, arrs[0])];
+
+      let table = table::new_table(CString::new("t1").unwrap().as_ptr(), schema, &cols, 1);
+      assert!(ty::schema_equals(schema, table::table_schema(table)));
+      assert_eq!(1, table::table_num_cols(table));
+      assert_eq!(32, table::table_num_rows(table));
+//      assert!(column::column_equals(cols[0], table::table_column(table, 0)));
+      let s = table::validate_table_cols(table);
+      assert!(status::ok(s));
+      status::release_status(s);
+
+      table::release_table(table);
+      column::release_column(cols[0]);
+      array::release_arr(arrs[0]);
+      ty::release_schema(schema);
+      ty::release_field(f1);
+      ty::release_data_type(f32_ty);
+    }
+  }
 }
