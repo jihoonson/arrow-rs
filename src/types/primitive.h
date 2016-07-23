@@ -107,6 +107,8 @@ extern "C" {
   INIT_ARRAY_BUILDER_DECL(FloatBuilder, f32);
   INIT_ARRAY_BUILDER_DECL(DoubleBuilder, f64);
 
+  // TODO: add reserve
+
   APPEND_ARRAY_BUILDER_DECL(UInt8Builder, uint8_t, u8);
   APPEND_ARRAY_BUILDER_DECL(Int8Builder, int8_t, i8);
   APPEND_ARRAY_BUILDER_DECL(UInt16Builder, uint16_t, u16);

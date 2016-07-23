@@ -117,13 +117,12 @@ mod tests {
     use buffer;
 
     unsafe {
+      // FIXME: using the single memory pool makes difficult to verify the amount of allocated memory
       let pool = memory_pool::default_mem_pool();
+      let mem_before = memory_pool::num_bytes_alloc(pool);
+
       let uint8 = ty::new_primitive_type(ty::Ty::UINT8);
       let builder = primitive::new_u8_arr_builder(pool, uint8);
-
-      let s = primitive::init_u8_arr_builder(builder, 32);
-      assert!(status::ok(s));
-      status::release_status(s);
 
       let mut values = heap::allocate(32, 32);
       for i in 0..32 {
@@ -146,14 +145,10 @@ mod tests {
         assert_eq!(i as u8, primitive::u8_arr_value(arr, i));
       }
 
-      // TODO: validate the following line
-      memory_pool::mem_free(pool, buffer::buf_mut_data(primitive::arr_data(arr)), 32);
-
       array::release_arr(arr);
       heap::deallocate(values, 32, 32);
 
-      // test common::tests::test_mem_pool ... FAILED
-      // thread 'common::tests::test_mem_pool' panicked at 'assertion failed: `(left == right)` (left: `64`, right: `128`)', src/common/mod.rs:22
+      assert_eq!(mem_before, memory_pool::num_bytes_alloc(pool));
     }
   }
 }
