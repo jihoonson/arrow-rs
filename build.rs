@@ -28,5 +28,6 @@ fn main() {
       .file("src/array.cc")
       .file("src/buffer.cc")
       .file("src/column.cc")
+      .file("src/table.cc")
       .compile("libtargetwrapper.a");
 }

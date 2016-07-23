@@ -9,13 +9,22 @@ mod types;
 mod ty;
 mod array;
 mod buffer;
-mod table;
 mod column;
+mod table;
 
 #[cfg(test)]
 mod tests {
   use ty;
   use std::ffi::{CString, CStr};
+  use array;
+  use types::primitive;
+  use common::memory_pool;
+  use common::status;
+  use alloc::heap;
+  use std::ptr;
+  use buffer;
+  use column;
+  use table;
 
   #[test]
   fn test_field() {
@@ -74,9 +83,6 @@ mod tests {
 
   #[test]
   fn test_buffer_resize() {
-    use common::memory_pool;
-    use common::status;
-    use buffer;
 
     unsafe {
       let pool = memory_pool::default_mem_pool();
@@ -109,14 +115,6 @@ mod tests {
 
   #[test]
   fn test_array() {
-    use array;
-    use types::primitive;
-    use common::memory_pool;
-    use common::status;
-    use alloc::heap;
-    use std::ptr;
-    use ty;
-    use buffer;
 
     unsafe {
       // FIXME: using the single memory pool makes difficult to verify the amount of allocated memory
@@ -151,25 +149,13 @@ mod tests {
 
   #[test]
   fn test_column() {
-    use array;
-    use types::primitive;
-    use common::memory_pool;
-    use common::status;
-    use alloc::heap;
-    use std::ptr;
-    use ty;
-    use buffer;
-    use column;
-    use std::ffi::CString;
 
     unsafe {
       let pool = memory_pool::default_mem_pool();
-      let mem_before = memory_pool::num_bytes_alloc(pool);
-
       let f32_ty = ty::new_primitive_type(ty::Ty::FLOAT);
       let f1 = ty::new_field(CString::new("f1").unwrap().as_ptr(), f32_ty, false);
-      let builder = primitive::new_f32_arr_builder(pool, f32_ty);
       let values: Vec<f32> = (0..32).map(|i| i as f32).collect();
+      let builder = primitive::new_f32_arr_builder(pool, f32_ty);
 
       let s = primitive::append_f32_arr_builder(builder, values.as_ptr(), 32, ptr::null());
       assert!(status::ok(s));
@@ -189,6 +175,38 @@ mod tests {
       column::release_column(col);
 
       array::release_arr(arr);
+      ty::release_field(f1);
+      ty::release_data_type(f32_ty);
+    }
+  }
+
+  #[test]
+  fn test_row_batch() {
+    unsafe {
+      let pool = memory_pool::default_mem_pool();
+      let f32_ty = ty::new_primitive_type(ty::Ty::FLOAT);
+      let f1 = ty::new_field(CString::new("f1").unwrap().as_ptr(), f32_ty, false);
+      let fields = [f1];
+      let schema = ty::new_schema(1, &fields);
+      let values: Vec<f32> = (0..32).map(|i| i as f32).collect();
+
+      let builder = primitive::new_f32_arr_builder(pool, f32_ty);
+      let s = primitive::append_f32_arr_builder(builder, values.as_ptr(), 32, ptr::null());
+      status::release_status(s);
+      let arrs = [primitive::finish_f32_arr_builder(builder)];
+
+      let row_batch = table::new_row_batch(schema, 32, &arrs, 1);
+
+      assert!(ty::schema_equals(schema, table::row_batch_schema(row_batch)));
+      assert!(array::arr_equals(arrs[0], table::row_batch_column(row_batch, 0)));
+      assert_eq!(32, table::row_batch_num_rows(row_batch));
+      assert_eq!(1, table::row_batch_num_cols(row_batch));
+
+      table::release_row_batch(row_batch);
+      array::release_arr(arrs[0]);
+      ty::release_schema(schema);
+      ty::release_field(f1);
+      ty::release_data_type(f32_ty);
     }
   }
 }

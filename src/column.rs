@@ -7,7 +7,7 @@ pub enum Column {}
 
 extern "C" {
   // Chunked array
-  pub fn new_chunked_arr(arrays: [Array], arr_len: i32) -> *const ChunkedArray;
+  pub fn new_chunked_arr(arrays: &[*const Array], arr_len: i32) -> *const ChunkedArray;
   pub fn release_chunked_arr(chunked_arr: *const ChunkedArray);
 
   // Column
