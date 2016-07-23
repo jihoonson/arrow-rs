@@ -9,6 +9,8 @@ mod types;
 mod ty;
 mod array;
 mod buffer;
+mod table;
+mod column;
 
 #[cfg(test)]
 mod tests {
@@ -123,13 +125,9 @@ mod tests {
 
       let uint8 = ty::new_primitive_type(ty::Ty::UINT8);
       let builder = primitive::new_u8_arr_builder(pool, uint8);
+      let values: Vec<u8> = (0..32).collect();
 
-      let mut values = heap::allocate(32, 32);
-      for i in 0..32 {
-        ptr::write(values.offset(i), i as u8);
-      }
-
-      let s = primitive::append_u8_arr_builder(builder, values, 32, ptr::null());
+      let s = primitive::append_u8_arr_builder(builder, values.as_ptr(), 32, ptr::null());
       assert!(status::ok(s));
       status::release_status(s);
 
@@ -146,9 +144,51 @@ mod tests {
       }
 
       array::release_arr(arr);
-      heap::deallocate(values, 32, 32);
 
       assert_eq!(mem_before, memory_pool::num_bytes_alloc(pool));
+    }
+  }
+
+  #[test]
+  fn test_column() {
+    use array;
+    use types::primitive;
+    use common::memory_pool;
+    use common::status;
+    use alloc::heap;
+    use std::ptr;
+    use ty;
+    use buffer;
+    use column;
+    use std::ffi::CString;
+
+    unsafe {
+      let pool = memory_pool::default_mem_pool();
+      let mem_before = memory_pool::num_bytes_alloc(pool);
+
+      let f32_ty = ty::new_primitive_type(ty::Ty::FLOAT);
+      let f1 = ty::new_field(CString::new("f1").unwrap().as_ptr(), f32_ty, false);
+      let builder = primitive::new_f32_arr_builder(pool, f32_ty);
+      let values: Vec<f32> = (0..32).map(|i| i as f32).collect();
+
+      let s = primitive::append_f32_arr_builder(builder, values.as_ptr(), 32, ptr::null());
+      assert!(status::ok(s));
+      status::release_status(s);
+
+      let arr = primitive::finish_f32_arr_builder(builder);
+      assert_eq!(32, array::arr_len(arr));
+
+      let col = column::new_column_from_arr(f1, arr);
+      assert_eq!(32, column::column_len(col));
+      assert_eq!(0, column::column_null_count(col));
+      assert!(ty::data_type_equals(f32_ty, column::column_type(col)));
+      let s = column::validate_column_data(col);
+      assert!(status::ok(s));
+      status::release_status(s);
+
+      column::release_column(col);
+
+      array::release_arr(arr);
     }
   }
 }

@@ -27,5 +27,6 @@ fn main() {
       .file("src/types/primitive.cc")
       .file("src/array.cc")
       .file("src/buffer.cc")
+      .file("src/column.cc")
       .compile("libtargetwrapper.a");
 }
