@@ -29,5 +29,6 @@ fn main() {
       .file("src/buffer.cc")
       .file("src/column.cc")
       .file("src/table.cc")
+      .file("src/ipc/memory.cc")
       .compile("libtargetwrapper.a");
 }

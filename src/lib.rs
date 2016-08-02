@@ -11,6 +11,7 @@ mod array;
 mod buffer;
 mod column;
 mod table;
+mod ipc;
 
 #[cfg(test)]
 mod tests {
@@ -25,6 +26,7 @@ mod tests {
   use buffer;
   use column;
   use table;
+  use ipc::memory;
 
   #[test]
   fn test_field() {
@@ -241,6 +243,43 @@ mod tests {
       ty::release_schema(schema);
       ty::release_field(f1);
       ty::release_data_type(f32_ty);
+    }
+  }
+
+  #[test]
+  fn test_mem_src() {
+    use std::fs::File;
+    use std::slice;
+
+    let mut f = File::create("test.dat").unwrap();
+    f.set_len(32).unwrap();
+    f.sync_all().unwrap();
+
+    unsafe {
+      let src = memory::open_mmap_src(CString::new("test.dat").unwrap().as_ptr(),
+                                      memory::AccessMode::READ_WRITE);
+      let values: Vec<u8> = (0..32).collect();
+      let origin = values.clone();
+      let s = memory::write_mmap_src(src, 0, values.as_ptr(), 32);
+      assert!(status::ok(s));
+      status::release_status(s);
+
+      let s = memory::close_mmap_src(src);
+      assert!(status::ok(s));
+      status::release_status(s);
+      memory::release_mmap_src(src);
+
+      let src = memory::open_mmap_src(CString::new("test.dat").unwrap().as_ptr(),
+                                      memory::AccessMode::READ_ONLY);
+      let buf = memory::read_at_mmap_src(src, 0, 32);
+      let v = slice::from_raw_parts(buffer::buf_data(buf), 32);
+      assert_eq!(&origin, &v);
+      buffer::release_buf(buf);
+
+      let s = memory::close_mmap_src(src);
+      assert!(status::ok(s));
+      status::release_status(s);
+      memory::release_mmap_src(src);
     }
   }
 }
