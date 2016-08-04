@@ -42,7 +42,7 @@ extern "C" {
     return reader;
   }
 
-  void release_row_batch_reader(RowBatchReader* reader) {
+  void release_row_batch_reader(RowBatchReaderBox* reader) {
     if (reader) {
       delete reader;
     }

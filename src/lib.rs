@@ -322,20 +322,20 @@ mod tests {
       let src = memory::open_mmap_src(CString::new("test_adapter.dat").unwrap().as_ptr(),
                                       memory::AccessMode::READ_ONLY);
 
-      let reader = adapter::open_row_batch_reader(src, 0);
+      let reader = adapter::open_row_batch_reader(src, header_pos);
       let row_batch = adapter::get_row_batch(reader, schema);
 
       let col = table::row_batch_column(row_batch, 0);
       assert!(array::arr_equals(arrs[0], col));
-
-      table::release_row_batch(row_batch);
 
       let s = memory::close_mmap_src(src);
       assert!(status::ok(s));
       status::release_status(s);
       memory::release_mmap_src(src);
 
+      adapter::release_row_batch_reader(reader);
       table::release_row_batch(row_batch);
+      
       array::release_arr(arrs[0]);
       ty::release_schema(schema);
       ty::release_field(f1);
