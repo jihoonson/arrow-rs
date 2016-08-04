@@ -27,6 +27,10 @@ mod tests {
   use column;
   use table;
   use ipc::memory;
+  use ipc::adapter;
+  use std::fs;
+  use std::fs::File;
+  use std::slice;
 
   #[test]
   fn test_field() {
@@ -248,15 +252,12 @@ mod tests {
 
   #[test]
   fn test_mem_src() {
-    use std::fs::File;
-    use std::slice;
-
-    let mut f = File::create("test.dat").unwrap();
+    let mut f = File::create("test_mem_src.dat").unwrap();
     f.set_len(32).unwrap();
     f.sync_all().unwrap();
 
     unsafe {
-      let src = memory::open_mmap_src(CString::new("test.dat").unwrap().as_ptr(),
+      let src = memory::open_mmap_src(CString::new("test_mem_src.dat").unwrap().as_ptr(),
                                       memory::AccessMode::READ_WRITE);
       let values: Vec<u8> = (0..32).collect();
       let origin = values.clone();
@@ -269,7 +270,7 @@ mod tests {
       status::release_status(s);
       memory::release_mmap_src(src);
 
-      let src = memory::open_mmap_src(CString::new("test.dat").unwrap().as_ptr(),
+      let src = memory::open_mmap_src(CString::new("test_mem_src.dat").unwrap().as_ptr(),
                                       memory::AccessMode::READ_ONLY);
       let buf = memory::read_at_mmap_src(src, 0, 32);
       let v = slice::from_raw_parts(buffer::buf_data(buf), 32);
@@ -281,5 +282,66 @@ mod tests {
       status::release_status(s);
       memory::release_mmap_src(src);
     }
+
+    fs::remove_file("test_mem_src.dat").unwrap();
+  }
+
+  #[test]
+  fn test_adapter() {
+    unsafe {
+      let pool = memory_pool::default_mem_pool();
+      let f32_ty = ty::new_primitive_type(ty::Ty::FLOAT);
+      let f1 = ty::new_field(CString::new("f1").unwrap().as_ptr(), f32_ty, false);
+      let fields = [f1];
+      let schema = ty::new_schema(1, &fields);
+      let values: Vec<f32> = (0..32).map(|i| i as f32).collect();
+
+      let builder = primitive::new_f32_arr_builder(pool, f32_ty);
+      let s = primitive::append_f32_arr_builder(builder, values.as_ptr(), 32, ptr::null());
+      status::release_status(s);
+      let arrs = [primitive::finish_f32_arr_builder(builder)];
+
+      let row_batch = table::new_row_batch(schema, 32, &arrs, 1);
+
+      let batch_size = adapter::get_row_batch_size(row_batch);
+
+      let mut f = File::create("test_adapter.dat").unwrap();
+      f.set_len(batch_size as u64).unwrap();
+      f.sync_all().unwrap();
+
+      let src = memory::open_mmap_src(CString::new("test_adapter.dat").unwrap().as_ptr(),
+                                      memory::AccessMode::READ_WRITE);
+      let header_pos = adapter::write_row_batch(src, row_batch, 0, 64);
+
+      let s = memory::close_mmap_src(src);
+      assert!(status::ok(s));
+      status::release_status(s);
+      memory::release_mmap_src(src);
+      table::release_row_batch(row_batch);
+
+      let src = memory::open_mmap_src(CString::new("test_adapter.dat").unwrap().as_ptr(),
+                                      memory::AccessMode::READ_ONLY);
+
+      let reader = adapter::open_row_batch_reader(src, 0);
+      let row_batch = adapter::get_row_batch(reader, schema);
+
+      let col = table::row_batch_column(row_batch, 0);
+      assert!(array::arr_equals(arrs[0], col));
+
+      table::release_row_batch(row_batch);
+
+      let s = memory::close_mmap_src(src);
+      assert!(status::ok(s));
+      status::release_status(s);
+      memory::release_mmap_src(src);
+
+      table::release_row_batch(row_batch);
+      array::release_arr(arrs[0]);
+      ty::release_schema(schema);
+      ty::release_field(f1);
+      ty::release_data_type(f32_ty);
+    }
+
+    fs::remove_file("test_adapter.dat").unwrap();
   }
 }
