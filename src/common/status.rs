@@ -2,6 +2,7 @@ use libc;
 
 // Status code of arrow
 // See arrow::StatusCode
+#[repr(C)]
 pub enum StatusCode {
     OK = 0,
     OutOfMemory = 1,

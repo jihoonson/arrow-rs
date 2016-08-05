@@ -1,5 +1,4 @@
 #include "buffer.h"
-#include <cassert>
 
 bool buf_part_equals(BufferBox* buf1, BufferBox* buf2, int64_t nbytes) {
   return buf1->p->Equals(*(buf2->p), nbytes);
@@ -28,7 +27,7 @@ uint8_t* buf_mut_data(BufferBox* buf) {
   if (MutableBuffer* v = dynamic_cast<MutableBuffer*>(buf->p)) {
     return ((MutableBuffer*)buf->p)->mutable_data();
   } else {
-    assert(false);
+    return nullptr;
   }
 }
 

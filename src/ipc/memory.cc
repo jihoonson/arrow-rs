@@ -3,8 +3,7 @@
 MemorySourceBox* open_mmap_src(const char* path, MemorySource::AccessMode mode) {
   std::shared_ptr<MemoryMappedSource> out;
   Status s = MemoryMappedSource::Open(std::string(path), mode, &out);
-  std::cout << s.ToString() << std::endl;
-  assert(s.ok());
+//  assert(s.ok());
 
   MemorySourceBox* mm_src = new MemorySourceBox;
   mm_src->sp = out;
@@ -27,7 +26,7 @@ StatusBox* close_mmap_src(MemorySourceBox* src) {
 BufferBox* read_at_mmap_src(MemorySourceBox* src, int64_t position, int64_t nbytes) {
   std::shared_ptr<Buffer> sp;
   Status s = src->p->ReadAt(position, nbytes, &sp);
-  assert(s.ok());
+//  assert(s.ok());
 
   BufferBox* buf = new BufferBox;
   buf->sp = sp;

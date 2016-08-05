@@ -2,7 +2,6 @@
 #define MEMORY_POOL_H
 
 #include <iostream>
-#include <cassert>
 #include "status.h"
 #include "arrow/util/memory-pool.h"
 

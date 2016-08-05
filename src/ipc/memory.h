@@ -1,8 +1,6 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include <assert.h>
-#include <iostream>
 #include "arrow/ipc/memory.h"
 #include "../common/status.h"
 #include "../buffer.h"
