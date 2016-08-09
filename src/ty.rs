@@ -97,8 +97,7 @@ extern "C" {
   pub fn data_type_to_string(data_type: *const DataType) -> *const libc::c_char;
   pub fn release_data_type(data_type: *const DataType);
 
-  pub fn new_field(
-, data_type: *const DataType, nullable: bool) -> *const Field;
+  pub fn new_field(name: *const libc::c_char, data_type: *const DataType, nullable: bool) -> *const Field;
   pub fn field_equals(field1: *const Field, field2: *const Field) -> bool;
   pub fn field_to_string(field: *const Field) -> *const libc::c_char;
   pub fn release_field(field: *const Field);
