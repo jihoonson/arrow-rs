@@ -10,7 +10,7 @@ struct StatusBox {
 };
 
 extern "C" {
-  StatusBox* new_status();
+//  StatusBox* new_status();
 
   void release_status(StatusBox *status);
 

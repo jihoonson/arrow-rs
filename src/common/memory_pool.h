@@ -8,7 +8,7 @@
 using namespace arrow;
 
 extern "C" {
-  bool mem_alloc(MemoryPool * pool, uint8_t* buffer, int64_t size, StatusBox &status);
+  StatusBox* mem_alloc(MemoryPool * pool, uint8_t* buffer, int64_t size);
 
   void mem_free(MemoryPool* pool, uint8_t* buffer, int64_t size);
 

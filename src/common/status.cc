@@ -1,11 +1,11 @@
 #include "status.h"
 
 extern "C" {
-  StatusBox* new_status() {
-    StatusBox* box = new StatusBox;
-    box->status = Status::OK();
-    return box;
-  }
+//  StatusBox* new_status() {
+//    StatusBox* box = new StatusBox;
+//    box->status = Status::OK();
+//    return box;
+//  }
 
   void release_status(StatusBox* status) {
     delete status;

@@ -1,8 +1,8 @@
 use array::Array;
 use buffer::Buffer;
-use ty::DataType;
+use ty::{RawDataTypePtr};
 use common::memory_pool::MemoryPool;
-use common::status::Status;
+use common::status::{RawStatusPtr, Status};
 
 macro_rules! builder_decl {
   ($name:ident) => (pub enum $name {});
@@ -42,38 +42,38 @@ extern "C" {
   pub fn f32_arr_value(arr: *const Array, i: i32) -> f32;
   pub fn f64_arr_value(arr: *const Array, i: i32) -> f64;
 
-  pub fn new_u8_arr_builder(pool: *mut MemoryPool, ty: *const DataType) -> *mut U8ArrayBuilder;
-  pub fn new_i8_arr_builder(pool: *mut MemoryPool, ty: *const DataType) -> *mut I8ArrayBuilder;
-  pub fn new_u16_arr_builder(pool: *mut MemoryPool, ty: *const DataType) -> *mut U16ArrayBuilder;
-  pub fn new_i16_arr_builder(pool: *mut MemoryPool, ty: *const DataType) -> *mut I16ArrayBuilder;
-  pub fn new_u32_arr_builder(pool: *mut MemoryPool, ty: *const DataType) -> *mut U32ArrayBuilder;
-  pub fn new_i32_arr_builder(pool: *mut MemoryPool, ty: *const DataType) -> *mut I32ArrayBuilder;
-  pub fn new_u64_arr_builder(pool: *mut MemoryPool, ty: *const DataType) -> *mut U64ArrayBuilder;
-  pub fn new_i64_arr_builder(pool: *mut MemoryPool, ty: *const DataType) -> *mut I64ArrayBuilder;
-  pub fn new_f32_arr_builder(pool: *mut MemoryPool, ty: *const DataType) -> *mut F32ArrayBuilder;
-  pub fn new_f64_arr_builder(pool: *mut MemoryPool, ty: *const DataType) -> *mut F64ArrayBuilder;
+  pub fn new_u8_arr_builder(pool: *mut MemoryPool, ty: RawDataTypePtr) -> *mut U8ArrayBuilder;
+  pub fn new_i8_arr_builder(pool: *mut MemoryPool, ty: RawDataTypePtr) -> *mut I8ArrayBuilder;
+  pub fn new_u16_arr_builder(pool: *mut MemoryPool, ty: RawDataTypePtr) -> *mut U16ArrayBuilder;
+  pub fn new_i16_arr_builder(pool: *mut MemoryPool, ty: RawDataTypePtr) -> *mut I16ArrayBuilder;
+  pub fn new_u32_arr_builder(pool: *mut MemoryPool, ty: RawDataTypePtr) -> *mut U32ArrayBuilder;
+  pub fn new_i32_arr_builder(pool: *mut MemoryPool, ty: RawDataTypePtr) -> *mut I32ArrayBuilder;
+  pub fn new_u64_arr_builder(pool: *mut MemoryPool, ty: RawDataTypePtr) -> *mut U64ArrayBuilder;
+  pub fn new_i64_arr_builder(pool: *mut MemoryPool, ty: RawDataTypePtr) -> *mut I64ArrayBuilder;
+  pub fn new_f32_arr_builder(pool: *mut MemoryPool, ty: RawDataTypePtr) -> *mut F32ArrayBuilder;
+  pub fn new_f64_arr_builder(pool: *mut MemoryPool, ty: RawDataTypePtr) -> *mut F64ArrayBuilder;
 
-  pub fn init_u8_arr_builder(builder: *mut U8ArrayBuilder, capa: i32) -> *const Status;
-  pub fn init_i8_arr_builder(builder: *mut I8ArrayBuilder, capa: i32) -> *const Status;
-  pub fn init_u16_arr_builder(builder: *mut U16ArrayBuilder, capa: i32) -> *const Status;
-  pub fn init_i16_arr_builder(builder: *mut I16ArrayBuilder, capa: i32) -> *const Status;
-  pub fn init_u32_arr_builder(builder: *mut U32ArrayBuilder, capa: i32) -> *const Status;
-  pub fn init_i32_arr_builder(builder: *mut I32ArrayBuilder, capa: i32) -> *const Status;
-  pub fn init_u64_arr_builder(builder: *mut U64ArrayBuilder, capa: i32) -> *const Status;
-  pub fn init_i64_arr_builder(builder: *mut I64ArrayBuilder, capa: i32) -> *const Status;
-  pub fn init_f32_arr_builder(builder: *mut F32ArrayBuilder, capa: i32) -> *const Status;
-  pub fn init_f64_arr_builder(builder: *mut F64ArrayBuilder, capa: i32) -> *const Status;
+  pub fn init_u8_arr_builder(builder: *mut U8ArrayBuilder, capa: i32) -> RawStatusPtr;
+  pub fn init_i8_arr_builder(builder: *mut I8ArrayBuilder, capa: i32) -> RawStatusPtr;
+  pub fn init_u16_arr_builder(builder: *mut U16ArrayBuilder, capa: i32) -> RawStatusPtr;
+  pub fn init_i16_arr_builder(builder: *mut I16ArrayBuilder, capa: i32) -> RawStatusPtr;
+  pub fn init_u32_arr_builder(builder: *mut U32ArrayBuilder, capa: i32) -> RawStatusPtr;
+  pub fn init_i32_arr_builder(builder: *mut I32ArrayBuilder, capa: i32) -> RawStatusPtr;
+  pub fn init_u64_arr_builder(builder: *mut U64ArrayBuilder, capa: i32) -> RawStatusPtr;
+  pub fn init_i64_arr_builder(builder: *mut I64ArrayBuilder, capa: i32) -> RawStatusPtr;
+  pub fn init_f32_arr_builder(builder: *mut F32ArrayBuilder, capa: i32) -> RawStatusPtr;
+  pub fn init_f64_arr_builder(builder: *mut F64ArrayBuilder, capa: i32) -> RawStatusPtr;
 
-  pub fn append_u8_arr_builder(builder: *mut U8ArrayBuilder, values: *const u8, len: i32, valid_bytes: *const u8) -> *const Status;
-  pub fn append_i8_arr_builder(builder: *mut I8ArrayBuilder, values: *const i8, len: i32, valid_bytes: *const u8) -> *const Status;
-  pub fn append_u16_arr_builder(builder: *mut U16ArrayBuilder, values: *const u16, len: i32, valid_bytes: *const u8) -> *const Status;
-  pub fn append_i16_arr_builder(builder: *mut I16ArrayBuilder, values: *const i16, len: i32, valid_bytes: *const u8) -> *const Status;
-  pub fn append_u32_arr_builder(builder: *mut U32ArrayBuilder, values: *const u32, len: i32, valid_bytes: *const u8) -> *const Status;
-  pub fn append_i32_arr_builder(builder: *mut I32ArrayBuilder, values: *const i32, len: i32, valid_bytes: *const u8) -> *const Status;
-  pub fn append_u64_arr_builder(builder: *mut U64ArrayBuilder, values: *const u64, len: i32, valid_bytes: *const u8) -> *const Status;
-  pub fn append_i64_arr_builder(builder: *mut I64ArrayBuilder, values: *const i64, len: i32, valid_bytes: *const u8) -> *const Status;
-  pub fn append_f32_arr_builder(builder: *mut F32ArrayBuilder, values: *const f32, len: i32, valid_bytes: *const u8) -> *const Status;
-  pub fn append_f64_arr_builder(builder: *mut F64ArrayBuilder, values: *const f64, len: i32, valid_bytes: *const u8) -> *const Status;
+  pub fn append_u8_arr_builder(builder: *mut U8ArrayBuilder, values: *const u8, len: i32, valid_bytes: *const u8) -> RawStatusPtr;
+  pub fn append_i8_arr_builder(builder: *mut I8ArrayBuilder, values: *const i8, len: i32, valid_bytes: *const u8) -> RawStatusPtr;
+  pub fn append_u16_arr_builder(builder: *mut U16ArrayBuilder, values: *const u16, len: i32, valid_bytes: *const u8) -> RawStatusPtr;
+  pub fn append_i16_arr_builder(builder: *mut I16ArrayBuilder, values: *const i16, len: i32, valid_bytes: *const u8) -> RawStatusPtr;
+  pub fn append_u32_arr_builder(builder: *mut U32ArrayBuilder, values: *const u32, len: i32, valid_bytes: *const u8) -> RawStatusPtr;
+  pub fn append_i32_arr_builder(builder: *mut I32ArrayBuilder, values: *const i32, len: i32, valid_bytes: *const u8) -> RawStatusPtr;
+  pub fn append_u64_arr_builder(builder: *mut U64ArrayBuilder, values: *const u64, len: i32, valid_bytes: *const u8) -> RawStatusPtr;
+  pub fn append_i64_arr_builder(builder: *mut I64ArrayBuilder, values: *const i64, len: i32, valid_bytes: *const u8) -> RawStatusPtr;
+  pub fn append_f32_arr_builder(builder: *mut F32ArrayBuilder, values: *const f32, len: i32, valid_bytes: *const u8) -> RawStatusPtr;
+  pub fn append_f64_arr_builder(builder: *mut F64ArrayBuilder, values: *const f64, len: i32, valid_bytes: *const u8) -> RawStatusPtr;
 
   pub fn finish_u8_arr_builder(builder: *mut U8ArrayBuilder) -> *const Array;
   pub fn finish_i8_arr_builder(builder: *mut I8ArrayBuilder) -> *const Array;

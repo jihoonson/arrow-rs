@@ -1,5 +1,5 @@
 use common::memory_pool::MemoryPool;
-use common::status::Status;
+use common::status::{RawStatusPtr, Status};
 
 pub enum Buffer {}
 pub enum BufferBuilder {}
@@ -19,14 +19,14 @@ extern "C" {
   pub fn buf_immut_view(buf: *const Buffer) -> *const Buffer;
 
   // Pool buffer
-  pub fn resize_buf(buf: *mut Buffer, new_size: i64) -> *const Status;
-  pub fn reserve_buf(buf: *mut Buffer, new_capa: i64) -> *const Status;
+  pub fn resize_buf(buf: *mut Buffer, new_size: i64) -> RawStatusPtr;
+  pub fn reserve_buf(buf: *mut Buffer, new_capa: i64) -> RawStatusPtr;
 
   // Buffer builder
   pub fn new_buf_builder(pool: *mut MemoryPool) -> *mut BufferBuilder;
   pub fn release_buf_builder(builder: *const BufferBuilder);
-  pub fn resize_buf_builder(builder: *mut BufferBuilder, elements: i32) -> *const Status;
-  pub fn raw_append_buf_builder(builder: *mut BufferBuilder, data: *const u8, len: i32) ->*const Status;
+  pub fn resize_buf_builder(builder: *mut BufferBuilder, elements: i32) -> RawStatusPtr;
+  pub fn raw_append_buf_builder(builder: *mut BufferBuilder, data: *const u8, len: i32) -> RawStatusPtr;
   pub fn finish_buf_builder(builder: *const BufferBuilder) -> *mut Buffer;
   pub fn buf_builder_capa(builder: *const BufferBuilder) -> i32;
   pub fn buf_builder_len(builder: *const BufferBuilder) -> i32;

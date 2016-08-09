@@ -1,9 +1,9 @@
 #include "memory_pool.h"
 
-bool mem_alloc(MemoryPool * pool, uint8_t* buffer, int64_t size, StatusBox &status) {
-  Status s = pool->Allocate(size, &buffer);
-  status.status = s;
-  return s.ok();
+StatusBox* mem_alloc(MemoryPool * pool, uint8_t* buffer, int64_t size) {
+  StatusBox* status = new StatusBox;
+  status->status = pool->Allocate(size, &buffer);
+  return status;
 }
 
 void mem_free(MemoryPool* pool, uint8_t* buffer, int64_t size) {

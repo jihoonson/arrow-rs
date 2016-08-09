@@ -1,4 +1,7 @@
-extern crate libc;
+use libc;
+use std::ops::Drop;
+use std::cmp::Eq;
+use std::ffi::{CStr, CString};
 
 // Data types in this library are all *logical*. They can be expressed as
 // either a primitive physical type (bytes or bits of some fixed size), a
@@ -78,32 +81,190 @@ pub enum Ty {
   USER = 60
 }
 
-pub enum DataType {}
-pub enum Field {}
-pub enum Schema {}
+pub struct DataType {
+  raw_type: RawDataTypePtr
+}
 
-// TODO: add safe APIs
+pub struct Field {
+  raw_field: RawFieldPtr
+}
+
+pub struct Schema {
+  raw_schema: RawSchemaPtr
+}
+
+impl DataType {
+  pub fn new_primitive(raw_type: RawDataTypePtr) -> DataType {
+    DataType {
+      raw_type: raw_type
+    }
+  }
+
+  pub fn new_list(elem_type: DataType) -> DataType {
+    unsafe {
+      DataType {
+        raw_type: new_list_type(elem_type.raw_type)
+      }
+    }
+  }
+
+  pub fn new_binary() -> DataType {
+    unsafe {
+      DataType {
+        raw_type: new_binary_type()
+      }
+    }
+  }
+
+  pub fn new_string() -> DataType {
+    unsafe {
+      DataType {
+        raw_type: new_string_type()
+      }
+    }
+  }
+
+  pub fn new_struct(field_num: i32, fields: &[Field]) -> DataType {
+    let raw_fields: Vec<RawFieldPtr> = fields.into_iter().map(|f| f.raw_field).collect::<Vec<RawFieldPtr>>();
+    unsafe {
+      DataType {
+        raw_type: new_struct_type(field_num, raw_fields.as_slice())
+      }
+    }
+  }
+
+  pub fn value_size(&self) -> i32 {
+    unsafe {
+      value_size(self.raw_type)
+    }
+  }
+}
+
+impl PartialEq for DataType {
+  fn eq(&self, other: &DataType) -> bool {
+    unsafe {
+      data_type_equals(self.raw_type, other.raw_type)
+    }
+  }
+}
+
+impl ToString for DataType {
+  fn to_string(&self) -> String {
+    unsafe {
+      let bytes = CStr::from_ptr(data_type_to_string(self.raw_type)).to_bytes();
+      String::from_utf8(Vec::from(bytes)).unwrap()
+    }
+  }
+}
+
+impl Drop for DataType {
+  fn drop(&mut self) {
+    unsafe {
+      release_data_type(self.raw_type);
+    }
+  }
+}
+
+impl Field {
+  pub fn new(name: String, ty: DataType, nullable: bool) -> Field {
+    unsafe {
+      Field {
+        raw_field: new_field(CString::new(name).unwrap().into_raw(), ty.raw_type, nullable)
+      }
+    }
+  }
+}
+
+impl PartialEq for Field {
+  fn eq(&self, other: &Field) -> bool {
+    unsafe {
+      field_equals(self.raw_field, other.raw_field)
+    }
+  }
+}
+
+impl ToString for Field {
+  fn to_string(&self) -> String {
+    unsafe {
+      let bytes = CStr::from_ptr(field_to_string(self.raw_field)).to_bytes();
+      String::from_utf8(Vec::from(bytes)).unwrap()
+    }
+  }
+}
+
+impl Drop for Field {
+  fn drop(&mut self) {
+    unsafe {
+      release_field(self.raw_field);
+    }
+  }
+}
+
+impl Schema {
+  pub fn new(field_num: i32, fields: &[Field]) -> Schema {
+    let raw_fields: Vec<RawFieldPtr> = fields.into_iter().map(|f| f.raw_field).collect::<Vec<RawFieldPtr>>();
+    unsafe {
+      Schema {
+        raw_schema: new_schema(field_num, raw_fields.as_slice())
+      }
+    }
+  }
+}
+
+impl PartialEq for Schema {
+  fn eq(&self, other: &Schema) -> bool {
+    unsafe {
+      schema_equals(self.raw_schema, other.raw_schema)
+    }
+  }
+}
+
+impl ToString for Schema {
+  fn to_string(&self) -> String {
+    unsafe {
+      let bytes = CStr::from_ptr(schema_to_string(self.raw_schema)).to_bytes();
+      String::from_utf8(Vec::from(bytes)).unwrap()
+    }
+  }
+}
+
+impl Drop for Schema {
+  fn drop(&mut self) {
+    unsafe {
+      release_schema(self.raw_schema);
+    }
+  }
+}
+
+pub enum RawDataType {}
+pub enum RawField {}
+pub enum RawSchema {}
+
+pub type RawDataTypePtr = *const RawDataType;
+pub type RawFieldPtr = *const RawField;
+pub type RawSchemaPtr = *const RawSchema;
+
 // TODO: singleton instances of types
 
 extern "C" {
-  pub fn new_primitive_type(ty: Ty) -> *const DataType;
-  pub fn new_list_type(data_type: *const DataType) -> *const DataType;
-  pub fn new_binary_type() -> *const DataType;
-  pub fn new_string_type() -> *const DataType;
-  pub fn new_struct_type(field_num: i32, fields: &[*const Field]) -> *const DataType;
+  pub fn new_primitive_type(ty: Ty) -> RawDataTypePtr;
+  pub fn new_list_type(data_type: RawDataTypePtr) -> RawDataTypePtr;
+  pub fn new_binary_type() -> RawDataTypePtr;
+  pub fn new_string_type() -> RawDataTypePtr;
+  pub fn new_struct_type(field_num: i32, fields: &[RawFieldPtr]) -> RawDataTypePtr;
 
-  pub fn data_type_equals(data_type1: *const DataType, data_type2: *const DataType) -> bool;
-  pub fn value_size(data_type: *const DataType) -> i32;
-  pub fn data_type_to_string(data_type: *const DataType) -> *const libc::c_char;
-  pub fn release_data_type(data_type: *const DataType);
+  pub fn data_type_equals(data_type1: RawDataTypePtr, data_type2: RawDataTypePtr) -> bool;
+  pub fn value_size(data_type: RawDataTypePtr) -> i32;
+  pub fn data_type_to_string(data_type: RawDataTypePtr) -> *const libc::c_char;
+  pub fn release_data_type(data_type: RawDataTypePtr);
 
-  pub fn new_field(name: *const libc::c_char, data_type: *const DataType, nullable: bool) -> *const Field;
-  pub fn field_equals(field1: *const Field, field2: *const Field) -> bool;
-  pub fn field_to_string(field: *const Field) -> *const libc::c_char;
-  pub fn release_field(field: *const Field);
+  pub fn new_field(name: *const libc::c_char, data_type: RawDataTypePtr, nullable: bool) -> RawFieldPtr;
+  pub fn field_equals(field1: RawFieldPtr, field2: RawFieldPtr) -> bool;
+  pub fn field_to_string(field: RawFieldPtr) -> *const libc::c_char;
+  pub fn release_field(field: RawFieldPtr);
 
-  pub fn new_schema(field_num: i32, fields: &[*const Field]) -> *const Schema;
-  pub fn schema_equals(s1: *const Schema, s2: *const Schema) -> bool;
-  pub fn schema_to_string(schema: *const Schema) -> *const libc::c_char;
-  pub fn release_schema(schema: *const Schema);
+  pub fn new_schema(field_num: i32, fields: &[RawFieldPtr]) -> RawSchemaPtr;
+  pub fn schema_equals(s1: RawSchemaPtr, s2: RawSchemaPtr) -> bool;
+  pub fn schema_to_string(schema: RawSchemaPtr) -> *const libc::c_char;
+  pub fn release_schema(schema: RawSchemaPtr);
 }
