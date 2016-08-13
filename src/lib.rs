@@ -19,8 +19,6 @@ mod benchmarks {
   use std::slice;
   use test::Bencher;
 
-  use buffer;
-  use column;
   use table;
   use ty;
   use array;

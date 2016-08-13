@@ -46,4 +46,12 @@ extern "C" {
   int16_t posix_code(StatusBox* status) {
     return status->status.posix_code();
   }
+
+  StatusCode code(StatusBox* status) {
+    return status->status.code();
+  }
+
+  const char* message(StatusBox* status) {
+    return status->status.message().c_str();
+  }
 }

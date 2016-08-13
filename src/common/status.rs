@@ -18,6 +18,30 @@ pub enum StatusCode {
 
 pub type RawStatusPtr = *const RawStatus;
 
+pub struct ArrowError {
+  code: StatusCode,
+  posix_code: i16,
+  message: String
+}
+
+impl ArrowError {
+  pub fn new(status: RawStatusPtr) -> ArrowError {
+    unsafe {
+      let code = code(status);
+      let posix_code = posix_code(status);
+      let bytes = CStr::from_ptr(message(status)).to_bytes();
+      let msg = String::from_utf8(Vec::from(bytes)).unwrap();
+      release_status(status); // TODO: consider more reliable way to handle the raw status pointer
+
+      ArrowError {
+        code: code,
+        posix_code: posix_code,
+        message: msg
+      }
+    }
+  }
+}
+
 pub struct Status {
   raw_status: RawStatusPtr
 }
@@ -104,4 +128,6 @@ extern "C" {
   pub fn status_to_str(status: *const RawStatus) -> *const libc::c_char;
   pub fn code_to_str(status: *const RawStatus) -> *const libc::c_char;
   pub fn posix_code(status: *const RawStatus) -> i16;
+  pub fn code(status: *const RawStatus) -> StatusCode;
+  pub fn message(status: RawStatusPtr) -> *const libc::c_char;
 }

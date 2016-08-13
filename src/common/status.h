@@ -31,6 +31,10 @@ extern "C" {
   const char* code_to_str(StatusBox* status);
 
   int16_t posix_code(StatusBox* status);
+
+  StatusCode code(StatusBox* status);
+
+  const char* message(StatusBox* status);
 }
 
 #endif

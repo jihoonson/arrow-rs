@@ -94,9 +94,15 @@ pub struct Schema {
 }
 
 impl DataType {
-  pub fn new_primitive(raw_type: RawDataTypePtr) -> DataType {
+  pub fn new(raw_type: RawDataTypePtr) -> DataType {
     DataType {
       raw_type: raw_type
+    }
+  }
+
+  pub fn new_primitive(ty: Ty) -> DataType {
+    DataType {
+      raw_type: unsafe { new_primitive_type(ty) }
     }
   }
 
@@ -138,6 +144,10 @@ impl DataType {
       value_size(self.raw_type)
     }
   }
+
+  pub fn raw_data_type(&self) -> RawDataTypePtr {
+    self.raw_type
+  }
 }
 
 impl PartialEq for DataType {
@@ -172,6 +182,10 @@ impl Field {
         raw_field: new_field(CString::new(name).unwrap().into_raw(), ty.raw_type, nullable)
       }
     }
+  }
+
+  pub fn raw_field(&self) -> RawFieldPtr {
+    self.raw_field
   }
 }
 
