@@ -1,3 +1,4 @@
+#![feature(concat_idents)]
 #![feature(test)]
 extern crate libc;
 extern crate test;

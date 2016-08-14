@@ -16,6 +16,10 @@ impl MemoryPool {
       pool: unsafe { default_mem_pool() }
     }
   }
+
+  pub fn raw_memory_pool(&self) -> RawMemoryPoolMutPtr {
+    self.pool
+  }
   
   pub fn alloc(&mut self, buffer: *mut u8, size: i64) -> Result<*mut u8, ArrowError> {
     unsafe {

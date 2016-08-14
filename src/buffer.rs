@@ -1,4 +1,4 @@
-use common::memory_pool::RawMemoryPoolMutPtr;
+use common::memory_pool::{MemoryPool, RawMemoryPoolMutPtr};
 use common::status::{RawStatusPtr, ArrowError};
 use common::status;
 
@@ -11,6 +11,16 @@ pub struct BufferBuilder {
 }
 
 impl Buffer {
+  pub fn from_raw(raw_buf: RawBufferPtr) -> Buffer {
+    Buffer {
+      raw_buf: raw_buf
+    }
+  }
+
+  pub fn raw_buf(&self) -> RawBufferPtr {
+    self.raw_buf
+  }
+
   pub fn capacity(&self) -> i64 {
     unsafe {
       buf_capa(self.raw_buf)
@@ -61,10 +71,10 @@ impl Drop for Buffer {
 }
 
 impl BufferBuilder {
-  pub fn new(pool: RawMemoryPoolMutPtr) -> BufferBuilder {
+  pub fn new(pool: MemoryPool) -> BufferBuilder {
     unsafe {
       BufferBuilder {
-        raw_builder: new_buf_builder(pool)
+        raw_builder: new_buf_builder(pool.raw_memory_pool())
       }
     }
   }

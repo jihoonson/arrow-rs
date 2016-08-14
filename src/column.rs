@@ -1,4 +1,4 @@
-use array::{RawArrayPtr, Array};
+use array::{RawArrayPtr, BaseArray};
 use ty::{RawFieldPtr, RawDataTypePtr, Field, DataType};
 use common::status::{RawStatusPtr, Status, ArrowError};
 use common::status;
@@ -12,7 +12,7 @@ pub struct Column {
 }
 
 impl ChunkedArray {
-  pub fn new(arrays: &[Array]) -> ChunkedArray {
+  pub fn new(arrays: &[BaseArray]) -> ChunkedArray {
     let raw_arrays = arrays.into_iter().map(|each_array| each_array.raw_array()).collect::<Vec<RawArrayPtr>>();
 
     ChunkedArray {
@@ -30,7 +30,7 @@ impl Drop for ChunkedArray {
 }
 
 impl Column {
-  pub fn from_array(field: Field, array: Array) -> Column {
+  pub fn from_array(field: Field, array: BaseArray) -> Column {
     Column {
       raw_column: unsafe { new_column_from_arr(field.raw_field(), array.raw_array()) }
     }
