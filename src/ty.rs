@@ -2,6 +2,8 @@ use libc;
 use std::ops::Drop;
 use std::cmp::Eq;
 use std::ffi::{CStr, CString};
+use std::str;
+
 #[macro_use]
 use common;
 
@@ -83,14 +85,17 @@ pub enum Ty {
   USER = 60
 }
 
+#[derive(Debug)]
 pub struct DataType {
   raw_type: RawDataTypePtr
 }
 
+#[derive(Debug)]
 pub struct Field {
   raw_field: RawFieldPtr
 }
 
+#[derive(Debug)]
 pub struct Schema {
   raw_schema: RawSchemaPtr
 }
@@ -174,8 +179,78 @@ impl Drop for DataType {
   }
 }
 
+pub struct DataTypeProvider {
+  u8: DataType,
+  i8: DataType,
+  u16: DataType,
+  i16: DataType,
+  u32: DataType,
+  i32: DataType,
+  u64: DataType,
+  i64: DataType,
+  f32: DataType,
+  f64: DataType
+}
+
+impl DataTypeProvider {
+  pub fn new() -> DataTypeProvider {
+    DataTypeProvider {
+      u8: DataType::new_primitive(Ty::UINT8),
+      i8: DataType::new_primitive(Ty::INT8),
+      u16: DataType::new_primitive(Ty::UINT16),
+      i16: DataType::new_primitive(Ty::INT16),
+      u32: DataType::new_primitive(Ty::UINT32),
+      i32: DataType::new_primitive(Ty::INT32),
+      u64: DataType::new_primitive(Ty::UINT64),
+      i64: DataType::new_primitive(Ty::INT64),
+      f32: DataType::new_primitive(Ty::FLOAT),
+      f64: DataType::new_primitive(Ty::DOUBLE)
+    }
+  }
+
+  pub fn u8(&self) -> &DataType {
+    &self.u8
+  }
+
+  pub fn i8(&self) -> &DataType {
+    &self.i8
+  }
+
+  pub fn u16(&self) -> &DataType {
+    &self.u16
+  }
+
+  pub fn i16(&self) -> &DataType {
+    &self.i16
+  }
+
+  pub fn u32(&self) -> &DataType {
+    &self.u32
+  }
+
+  pub fn i32(&self) -> &DataType {
+    &self.i32
+  }
+
+  pub fn u64(&self) -> &DataType {
+    &self.u64
+  }
+
+  pub fn i64(&self) -> &DataType {
+    &self.i64
+  }
+
+  pub fn f32(&self) -> &DataType {
+    &self.f32
+  }
+
+  pub fn f64(&self) -> &DataType {
+    &self.f64
+  }
+}
+
 impl Field {
-  pub fn new(name: String, ty: DataType, nullable: bool) -> Field {
+  pub fn new(name: String, ty: &DataType, nullable: bool) -> Field {
     Field {
       raw_field: unsafe { new_field(string_to_cstr!(name), ty.raw_type, nullable) }
     }
@@ -209,11 +284,11 @@ impl Drop for Field {
 }
 
 impl Schema {
-  pub fn new(field_num: i32, fields: &[Field]) -> Schema {
+  pub fn new(fields: &[Field]) -> Schema {
     let raw_fields: Vec<RawFieldPtr> = fields.into_iter().map(|f| f.raw_field).collect::<Vec<RawFieldPtr>>();
     unsafe {
       Schema {
-        raw_schema: new_schema(field_num, raw_fields.as_slice())
+        raw_schema: new_schema(fields.len() as i32, raw_fields.as_slice())
       }
     }
   }
@@ -258,8 +333,6 @@ pub enum RawSchema {}
 pub type RawDataTypePtr = *const RawDataType;
 pub type RawFieldPtr = *const RawField;
 pub type RawSchemaPtr = *const RawSchema;
-
-// TODO: singleton instances of types
 
 extern "C" {
   pub fn new_primitive_type(ty: Ty) -> RawDataTypePtr;

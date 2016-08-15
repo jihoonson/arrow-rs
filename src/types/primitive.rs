@@ -1,5 +1,5 @@
 use array::*;
-use buffer::{RawBufferPtr, Buffer};
+use buffer::{RawBufferPtr, Buf, Buffer};
 use ty::{RawDataTypePtr, DataType, Ty};
 use ty;
 use common::memory_pool::{RawMemoryPoolMutPtr, MemoryPool};
@@ -96,8 +96,8 @@ macro_rules! define_array {
         self.raw_array
       }
 
-      fn data(&self) -> Buffer {
-        Buffer::from_raw( unsafe { arr_data(self.raw_array) } )
+      fn data(&self) -> Buf {
+        Buf::from_raw( unsafe { arr_data(self.raw_array) } )
       }
     }
   );

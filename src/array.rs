@@ -1,6 +1,6 @@
 use ty::{DataType, RawDataTypePtr, Ty};
 use ty;
-use buffer::Buffer;
+use buffer::{Buf, Buffer};
 use types::primitive;
 
 // TODO: inheritance relationship for Array and its sub classes
@@ -22,7 +22,7 @@ pub trait Array<Ty=Self> {
 
   fn raw_array(&self) -> RawArrayPtr;
 
-  fn data(&self) -> Buffer;
+  fn data(&self) -> Buf;
 
   fn new_null_array(length: i32) -> Ty;
 }
@@ -72,8 +72,8 @@ impl Array for BaseArray {
     self.raw_array
   }
 
-  fn data(&self) -> Buffer {
-    Buffer::from_raw( unsafe { primitive::arr_data(self.raw_array) } )
+  fn data(&self) -> Buf {
+    Buf::from_raw( unsafe { primitive::arr_data(self.raw_array) } )
   }
 
   fn new_null_array(length: i32) -> BaseArray {

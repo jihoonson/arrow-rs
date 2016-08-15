@@ -27,7 +27,7 @@ mod tests {
   use arrow::common::status;
 
   #[test]
-  fn test_field() {
+  fn test_raw_field() {
     unsafe {
       let dt = ty::new_primitive_type(ty::Ty::INT32);
       assert_eq!(4, ty::value_size(dt));
@@ -57,7 +57,20 @@ mod tests {
   }
 
   #[test]
-  fn test_schema() {
+  fn test_field() {
+    use arrow::ty::{DataTypeProvider, Field};
+
+    let ty_provider = DataTypeProvider::new();
+
+    let f1 = Field::new(String::from("f1"), ty_provider.i32(), false);
+    let f2 = Field::new(String::from("f1"), ty_provider.i32(), false);
+
+    assert_eq!(f1, f2);
+    assert_eq!(String::from("f1: int32 not null"), f1.to_string());
+  }
+
+  #[test]
+  fn test_raw_schema() {
     unsafe {
       let int_type = ty::new_primitive_type(ty::Ty::INT32);
       let float_type = ty::new_primitive_type(ty::Ty::FLOAT);
@@ -82,7 +95,27 @@ mod tests {
   }
 
   #[test]
-  fn test_buffer_resize() {
+  fn test_schema() {
+    use arrow::ty::{DataTypeProvider, Schema, Field};
+
+    let ty_provider = DataTypeProvider::new();
+    let f1 = Field::new(String::from("f1"), ty_provider.i32(), false);
+    let f2 = Field::new(String::from("f2"), ty_provider.f32(), false);
+    let f3 = Field::new(String::from("f3"), ty_provider.u64(), true);
+
+    let schema = Schema::new(&[f1, f2, f3]);
+    assert_eq!(String::from("f1: int32 not null\nf2: float not null\nf3: uint64"), schema.to_string());
+
+    let f1 = Field::new(String::from("f1"), ty_provider.i32(), false);
+    let f2 = Field::new(String::from("f2"), ty_provider.f32(), false);
+    let f3 = Field::new(String::from("f3"), ty_provider.u64(), true);
+    let schema2 = Schema::new(&[f1, f2, f3]);
+
+    assert_eq!(schema, schema2);
+  }
+
+  #[test]
+  fn test_raw_buffer() {
 
     unsafe {
       let pool = memory_pool::default_mem_pool();
@@ -111,6 +144,37 @@ mod tests {
       buffer::release_buf(buf);
       buffer::release_buf_builder(buf_builder);
     }
+  }
+
+  #[test]
+  fn test_buffer() {
+    use arrow::common::memory_pool::MemoryPool;
+    use arrow::buffer::{BufferBuilder, Buffer, Resizable, Mutable};
+
+    let pool = MemoryPool::default();
+    let mut builder = BufferBuilder::new(&pool);
+    let val: u8 = 10;
+
+    let len = match builder.raw_append(&val, 5) {
+      Ok(len) => len,
+      Err(e) => panic!("append failed: {}", e.message())
+    };
+    assert_eq!(5, len);
+
+    builder.resize(200);
+    assert_eq!(5, len);
+    assert_eq!(256, builder.capacity());
+
+    let mut buf = builder.finish();
+    assert_eq!(200, buf.size());
+    assert_eq!(256, buf.capacity());
+
+    let buf = match buf.resize(50) {
+      Ok(buf) => buf,
+      Err(e) => panic!("resize failed: {}", e.message())
+    };
+    assert_eq!(50, buf.size());
+    assert_eq!(256, buf.capacity());
   }
 
   #[test]

@@ -1,7 +1,7 @@
 #[macro_use]
 use common::status;
 use common::status::{RawStatusPtr, ArrowError};
-use buffer::{RawBufferPtr, Buffer};
+use buffer::{RawBufferPtr, Buf, Buffer};
 use libc;
 use std::ffi::CString;
 
@@ -35,8 +35,8 @@ impl MemoryMappedSource {
     result_from_status!(s, self)
   }
 
-  pub fn read(&self, pos: i64, nbytes: i64) -> Buffer {
-    Buffer::from_raw( unsafe { read_at_mmap_src(self.raw_source, pos, nbytes) } )
+  pub fn read(&self, pos: i64, nbytes: i64) -> Buf {
+    Buf::from_raw( unsafe { read_at_mmap_src(self.raw_source, pos, nbytes) } )
   }
 
   pub fn write(&self, pos: i64, data: *const u8, nbytes: i64) -> Result<&MemoryMappedSource, ArrowError> {

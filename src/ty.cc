@@ -1,4 +1,5 @@
 #include "ty.h"
+#include <iostream>
 
 bool is_primitive_type(Type::type ty) {
   switch (ty) {
@@ -124,7 +125,10 @@ int value_size(DataTypeBox* dt) {
 }
 
 const char* data_type_to_string(DataTypeBox* dt) {
-  return dt->p->ToString().c_str();
+  std::string str = dt->p->ToString();
+  char *cstr = new char[str.length() + 1];
+  std::strcpy(cstr, str.c_str());
+  return cstr;
 }
 
 void release_data_type(DataTypeBox * dt) {
@@ -145,7 +149,10 @@ bool field_equals(const FieldBox* f1, const FieldBox* f2) {
 }
 
 const char* field_to_string(FieldBox* fp) {
-  return fp->p->ToString().c_str();
+  std::string str = fp->p->ToString();
+  char *cstr = new char[str.length() + 1];
+  std::strcpy(cstr, str.c_str());
+  return cstr;
 }
 
 void release_field(FieldBox* fp) {
@@ -171,7 +178,10 @@ bool schema_equals(SchemaBox* s1, SchemaBox* s2) {
 }
 
 const char* schema_to_string(SchemaBox* schema) {
-  return schema->p->ToString().c_str();
+  std::string str = schema->p->ToString();
+  char *cstr = new char[str.length() + 1];
+  std::strcpy(cstr, str.c_str());
+  return cstr;
 }
 
 void release_schema(SchemaBox* schema) {

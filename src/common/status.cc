@@ -36,11 +36,17 @@ extern "C" {
   }
 
   const char* status_to_str(StatusBox* status) {
-    return status->status.ToString().c_str();
+    std::string str = status->status.ToString();
+    char *cstr = new char[str.length() + 1];
+    std::strcpy(cstr, str.c_str());
+    return cstr;
   }
 
   const char* code_to_str(StatusBox* status) {
-    return status->status.CodeAsString().c_str();
+    std::string str = status->status.CodeAsString();
+    char *cstr = new char[str.length() + 1];
+    std::strcpy(cstr, str.c_str());
+    return cstr;
   }
 
   int16_t posix_code(StatusBox* status) {
@@ -52,6 +58,9 @@ extern "C" {
   }
 
   const char* message(StatusBox* status) {
-    return status->status.message().c_str();
+    std::string str = status->status.message();
+    char *cstr = new char[str.length() + 1];
+    std::strcpy(cstr, str.c_str());
+    return cstr;
   }
 }
