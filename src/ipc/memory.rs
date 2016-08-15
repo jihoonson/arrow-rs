@@ -22,7 +22,7 @@ pub struct MemoryMappedSource {
 impl MemoryMappedSource {
   pub fn open(path: String, mode: AccessMode) -> MemoryMappedSource {
     MemoryMappedSource {
-      raw_source: unsafe { open_mmap_src(CString::new(path).unwrap().into_raw(), mode) }
+      raw_source: unsafe { open_mmap_src(string_to_cstr!(path), mode) }
     }
   }
 

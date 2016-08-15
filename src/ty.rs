@@ -2,6 +2,8 @@ use libc;
 use std::ops::Drop;
 use std::cmp::Eq;
 use std::ffi::{CStr, CString};
+#[macro_use]
+use common;
 
 // Data types in this library are all *logical*. They can be expressed as
 // either a primitive physical type (bytes or bits of some fixed size), a
@@ -160,10 +162,7 @@ impl PartialEq for DataType {
 
 impl ToString for DataType {
   fn to_string(&self) -> String {
-    unsafe {
-      let bytes = CStr::from_ptr(data_type_to_string(self.raw_type)).to_bytes();
-      String::from_utf8(Vec::from(bytes)).unwrap()
-    }
+    cstr_to_string!( unsafe { data_type_to_string(self.raw_type) } )
   }
 }
 
@@ -177,10 +176,8 @@ impl Drop for DataType {
 
 impl Field {
   pub fn new(name: String, ty: DataType, nullable: bool) -> Field {
-    unsafe {
-      Field {
-        raw_field: new_field(CString::new(name).unwrap().into_raw(), ty.raw_type, nullable)
-      }
+    Field {
+      raw_field: unsafe { new_field(string_to_cstr!(name), ty.raw_type, nullable) }
     }
   }
 
@@ -199,10 +196,7 @@ impl PartialEq for Field {
 
 impl ToString for Field {
   fn to_string(&self) -> String {
-    unsafe {
-      let bytes = CStr::from_ptr(field_to_string(self.raw_field)).to_bytes();
-      String::from_utf8(Vec::from(bytes)).unwrap()
-    }
+    cstr_to_string!( unsafe { field_to_string(self.raw_field) } )
   }
 }
 
@@ -245,10 +239,7 @@ impl PartialEq for Schema {
 
 impl ToString for Schema {
   fn to_string(&self) -> String {
-    unsafe {
-      let bytes = CStr::from_ptr(schema_to_string(self.raw_schema)).to_bytes();
-      String::from_utf8(Vec::from(bytes)).unwrap()
-    }
+    cstr_to_string!( unsafe { schema_to_string(self.raw_schema) } )
   }
 }
 

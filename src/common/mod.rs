@@ -5,7 +5,7 @@ pub mod memory_pool;
 #[macro_export]
 macro_rules! cstr_to_string {
   ($str:expr) => (
-    String::from_utf8(Vec::from(CStr::from_ptr($str).to_bytes())).unwrap()
+    String::from_utf8(Vec::from( unsafe { CStr::from_ptr($str).to_bytes() } )).unwrap()
   );
 }
 
@@ -20,7 +20,7 @@ macro_rules! string_to_cstr {
 mod tests {
 
   #[test]
-  fn test_mem_pool() {
+  fn test_raw_mem_pool() {
     use common::memory_pool;
     use std::ptr;
     use libc;

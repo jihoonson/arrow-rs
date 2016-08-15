@@ -41,8 +41,7 @@ impl RowBatch {
   }
 
   pub fn column_name(&self, i: i32) -> String {
-    let bytes = unsafe { CStr::from_ptr(row_batch_col_name(self.raw_batch, i)).to_bytes() };
-    String::from_utf8(Vec::from(bytes)).unwrap()
+    cstr_to_string!( unsafe { row_batch_col_name(self.raw_batch, i) } )
   }
 
   pub fn column_num(&self) -> i32 {
