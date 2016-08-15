@@ -3,6 +3,18 @@ use std::ops::Drop;
 use std::string::String;
 use std::ffi::CStr;
 
+#[macro_export]
+macro_rules! result_from_status {
+  ($s:ident, $result:expr) => (
+    if unsafe { status::ok($s) } {
+      unsafe { status::release_status($s) };
+      Ok($result)
+    } else {
+      Err(ArrowError::new($s))
+    }
+  );
+}
+
 // Status code of arrow
 // See arrow::StatusCode
 #[repr(C)]

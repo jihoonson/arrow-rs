@@ -223,6 +223,16 @@ impl Schema {
       }
     }
   }
+
+  pub fn from_raw(raw_schema: RawSchemaPtr) -> Schema {
+    Schema {
+      raw_schema: raw_schema
+    }
+  }
+
+  pub fn raw_schema(&self) -> RawSchemaPtr {
+    self.raw_schema
+  }
 }
 
 impl PartialEq for Schema {

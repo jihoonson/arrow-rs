@@ -297,7 +297,7 @@ mod tests {
 
       let row_batch = table::new_row_batch(schema, 32, &arrs, 1);
 
-      let batch_size = adapter::get_row_batch_size(row_batch);
+      let batch_size = adapter::c_api::get_row_batch_size(row_batch);
 
       let mut f = File::create("test_adapter.dat").unwrap();
       f.set_len(batch_size as u64).unwrap();
@@ -305,7 +305,7 @@ mod tests {
 
       let src = memory::open_mmap_src(CString::new("test_adapter.dat").unwrap().as_ptr(),
                                       memory::AccessMode::READ_WRITE);
-      let header_pos = adapter::write_row_batch(src, row_batch, 0, 64);
+      let header_pos = adapter::c_api::write_row_batch(src, row_batch, 0, 64);
 
       let s = memory::close_mmap_src(src);
       assert!(status::ok(s));
@@ -316,8 +316,8 @@ mod tests {
       let src = memory::open_mmap_src(CString::new("test_adapter.dat").unwrap().as_ptr(),
                                       memory::AccessMode::READ_ONLY);
 
-      let reader = adapter::open_row_batch_reader(src, header_pos);
-      let row_batch = adapter::get_row_batch(reader, schema);
+      let reader = adapter::c_api::open_row_batch_reader(src, header_pos);
+      let row_batch = adapter::c_api::get_row_batch(reader, schema);
 
       let col = table::row_batch_column(row_batch, 0);
       assert!(array::arr_equals(arrs[0], col));
@@ -327,7 +327,7 @@ mod tests {
       status::release_status(s);
       memory::release_mmap_src(src);
 
-      adapter::release_row_batch_reader(reader);
+      adapter::c_api::release_row_batch_reader(reader);
       table::release_row_batch(row_batch);
 
       array::release_arr(arrs[0]);

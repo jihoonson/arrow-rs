@@ -1,3 +1,4 @@
+#[macro_use]
 use common::status;
 use common::status::{RawStatusPtr, ArrowError};
 use libc;
@@ -24,11 +25,12 @@ impl MemoryPool {
   pub fn alloc(&mut self, buffer: *mut u8, size: i64) -> Result<*mut u8, ArrowError> {
     unsafe {
       let s = mem_alloc(self.pool, buffer, size);
-      if status::ok(s) {
-        Ok(buffer)
-      } else {
-        Err(ArrowError::new(s))
-      }
+      result_from_status!(s, buffer)
+//      if status::ok(s) {
+//        Ok(buffer)
+//      } else {
+//        Err(ArrowError::new(s))
+//      }
     }
   }
 }

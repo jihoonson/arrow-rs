@@ -1,19 +1,69 @@
-use common::status::{RawStatusPtr, Status};
-use buffer::RawBufferPtr;
+#[macro_use]
+use common::status;
+use common::status::{RawStatusPtr, ArrowError};
+use buffer::{RawBufferPtr, Buffer};
 use libc;
+use std::ffi::CString;
 
+#[repr(C)]
 pub enum AccessMode {
   READ_ONLY,
   READ_WRITE
 }
 
-pub enum MemorySource {}
+pub enum MemorySource {
+  MEMORY_MAPPED_SRC { data: MemoryMappedSource }
+}
+
+pub struct MemoryMappedSource {
+  raw_source: RawMemoryMappedSourceMutPtr
+}
+
+impl MemoryMappedSource {
+  pub fn open(path: String, mode: AccessMode) -> MemoryMappedSource {
+    MemoryMappedSource {
+      raw_source: unsafe { open_mmap_src(CString::new(path).unwrap().into_raw(), mode) }
+    }
+  }
+
+  pub fn raw_source(&self) -> RawMemoryMappedSourceMutPtr {
+    self.raw_source
+  }
+
+  pub fn close(&self) -> Result<&MemoryMappedSource, ArrowError> {
+    let s = unsafe { close_mmap_src(self.raw_source) };
+    result_from_status!(s, self)
+  }
+
+  pub fn read(&self, pos: i64, nbytes: i64) -> Buffer {
+    Buffer::from_raw( unsafe { read_at_mmap_src(self.raw_source, pos, nbytes) } )
+  }
+
+  pub fn write(&self, pos: i64, data: *const u8, nbytes: i64) -> Result<&MemoryMappedSource, ArrowError> {
+    let s = unsafe { write_mmap_src(self.raw_source, pos, data, nbytes) };
+    result_from_status!(s, self)
+  }
+
+  pub fn size(&self) -> i64 {
+    unsafe { mmap_src_size(self.raw_source) }
+  }
+}
+
+impl Drop for MemoryMappedSource {
+  fn drop(&mut self) {
+    unsafe { release_mmap_src(self.raw_source) }
+  }
+}
+
+pub enum RawMemoryMappedSource {}
+
+pub type RawMemoryMappedSourceMutPtr = *mut RawMemoryMappedSource;
 
 extern "C" {
-  pub fn open_mmap_src(path: *const libc::c_char, mode: AccessMode) -> *mut MemorySource;
-  pub fn release_mmap_src(src: *mut MemorySource);
-  pub fn close_mmap_src(src: *mut MemorySource) -> RawStatusPtr;
-  pub fn read_at_mmap_src(src: *mut MemorySource, pos: i64, nbytes: i64) -> RawBufferPtr;
-  pub fn write_mmap_src(src: *mut MemorySource, pos: i64, data: *const u8, nbytes: i64) -> RawStatusPtr;
-  pub fn mmap_src_size(src: *mut MemorySource) -> i64;
+  pub fn open_mmap_src(path: *const libc::c_char, mode: AccessMode) -> RawMemoryMappedSourceMutPtr;
+  pub fn release_mmap_src(src: RawMemoryMappedSourceMutPtr);
+  pub fn close_mmap_src(src: RawMemoryMappedSourceMutPtr) -> RawStatusPtr;
+  pub fn read_at_mmap_src(src: RawMemoryMappedSourceMutPtr, pos: i64, nbytes: i64) -> RawBufferPtr;
+  pub fn write_mmap_src(src: RawMemoryMappedSourceMutPtr, pos: i64, data: *const u8, nbytes: i64) -> RawStatusPtr;
+  pub fn mmap_src_size(src: RawMemoryMappedSourceMutPtr) -> i64;
 }

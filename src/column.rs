@@ -1,7 +1,8 @@
+#[macro_use]
+use common::status;
+use common::status::{RawStatusPtr, Status, ArrowError};
 use array::{RawArrayPtr, BaseArray};
 use ty::{RawFieldPtr, RawDataTypePtr, Field, DataType};
-use common::status::{RawStatusPtr, Status, ArrowError};
-use common::status;
 
 pub struct ChunkedArray {
   raw_array: RawChunkedArrayPtr
@@ -30,6 +31,12 @@ impl Drop for ChunkedArray {
 }
 
 impl Column {
+  pub fn from_raw(raw_column: RawColumnPtr) -> Column {
+    Column {
+      raw_column: raw_column
+    }
+  }
+
   pub fn from_array(field: Field, array: BaseArray) -> Column {
     Column {
       raw_column: unsafe { new_column_from_arr(field.raw_field(), array.raw_array()) }
@@ -63,13 +70,12 @@ impl Column {
   pub fn validate_data(&self) -> Result<ChunkedArray, ArrowError> {
     unsafe {
       let s = validate_column_data(self.raw_column);
-      if status::ok(s) {
-        status::release_status(s);
-        Ok(self.data())
-      } else {
-        Err(ArrowError::new(s))
-      }
+      result_from_status!(s, self.data())
     }
+  }
+
+  pub fn raw_column(&self) -> RawColumnPtr {
+    self.raw_column
   }
 }
 

@@ -32,6 +32,12 @@ pub struct BaseArray {
 }
 
 impl BaseArray {
+  pub fn from_raw(raw_array: RawArrayPtr) -> BaseArray {
+    BaseArray {
+      raw_array: raw_array
+    }
+  }
+
   pub fn raw_array(&self) -> RawArrayPtr {
     self.raw_array
   }

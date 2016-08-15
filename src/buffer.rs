@@ -1,5 +1,6 @@
 use common::memory_pool::{MemoryPool, RawMemoryPoolMutPtr};
 use common::status::{RawStatusPtr, ArrowError};
+#[macro_use]
 use common::status;
 
 pub struct Buffer {
@@ -82,24 +83,26 @@ impl BufferBuilder {
   pub fn resize(&mut self, size: i32) -> Result<i32, ArrowError> {
     unsafe {
       let s = resize_buf_builder(self.raw_builder, size);
-      if status::ok(s) {
-        status::release_status(s);
-        Ok(buf_builder_capa(self.raw_builder))
-      } else {
-        Err(ArrowError::new(s))
-      }
+      result_from_status!(s, buf_builder_capa(self.raw_builder))
+//      if status::ok(s) {
+//        status::release_status(s);
+//        Ok(buf_builder_capa(self.raw_builder))
+//      } else {
+//        Err(ArrowError::new(s))
+//      }
     }
   }
 
   pub fn raw_append(&mut self, data: *const u8, len: i32) -> Result<i32, ArrowError> {
     unsafe {
       let s = raw_append_buf_builder(self.raw_builder, data, len);
-      if status::ok(s) {
-        status::release_status(s);
-        Ok(buf_builder_len(self.raw_builder))
-      } else {
-        Err(ArrowError::new(s))
-      }
+      result_from_status!(s, buf_builder_len(self.raw_builder))
+//      if status::ok(s) {
+//        status::release_status(s);
+//        Ok(buf_builder_len(self.raw_builder))
+//      } else {
+//        Err(ArrowError::new(s))
+//      }
     }
   }
 
