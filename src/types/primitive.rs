@@ -132,12 +132,6 @@ impl U8ArrayBuilder {
   pub fn init(&mut self, capacity: i32) -> Result<&mut U8ArrayBuilder, ArrowError> {
     unsafe {
       let s = init_u8_arr_builder(self.raw_builder, capacity);
-//      if status::ok(s) {
-//        status::release_status(s);
-//        Ok(self)
-//      } else {
-//        Err(ArrowError::new(s))
-//      }
       result_from_status!(s, self)
     }
   }
@@ -145,12 +139,6 @@ impl U8ArrayBuilder {
   pub fn append(&mut self, values: *const u8, len: i32, valid_bytes: *const u8) -> Result<&mut U8ArrayBuilder, ArrowError> {
     unsafe {
       let s = append_u8_arr_builder(self.raw_builder, values, len, valid_bytes);
-//      if status::ok(s) {
-//        status::release_status(s);
-//        Ok(self)
-//      } else {
-//        Err(ArrowError::new(s))
-//      }
       result_from_status!(s, self)
     }
   }

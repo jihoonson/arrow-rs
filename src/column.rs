@@ -1,6 +1,6 @@
 #[macro_use]
 use common::status;
-use common::status::{RawStatusPtr, Status, ArrowError};
+use common::status::{RawStatusPtr, ArrowError};
 use array::{RawArrayPtr, BaseArray};
 use ty::{RawFieldPtr, RawDataTypePtr, Field, DataType};
 

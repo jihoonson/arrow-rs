@@ -38,11 +38,25 @@ mod tests {
       status::release_status(status);
       assert_eq!(init_mem_bytes + 64, memory_pool::num_bytes_alloc(pool));
 
-      memory_pool::mem_free(pool, buffer, 32);
-      assert_eq!(init_mem_bytes + 32, memory_pool::num_bytes_alloc(pool));
-
-      memory_pool::mem_free(pool, buffer, 32);
+      memory_pool::mem_free(pool, buffer, 64);
       assert_eq!(init_mem_bytes, memory_pool::num_bytes_alloc(pool));
     }
+  }
+
+  #[test]
+  fn test_mem_pool() {
+    use common::memory_pool::MemoryPool;
+
+    let mut pool = MemoryPool::default();
+    let init_len = pool.len();
+
+    let buf = match pool.alloc(64) {
+      Ok(buf) => buf,
+      Err(e) => panic!("allocation failed: {}", e.message())
+    };
+    assert_eq!(init_len + 64, pool.len());
+
+    pool.free(buf, 64);
+    assert_eq!(init_len, pool.len());
   }
 }

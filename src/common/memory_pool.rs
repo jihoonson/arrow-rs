@@ -1,7 +1,9 @@
-#[macro_use]
-use common::status;
 use common::status::{RawStatusPtr, ArrowError};
 use libc;
+use std::ptr;
+
+#[macro_use]
+use common::status;
 
 pub enum RawMemoryPool {}
 
@@ -22,16 +24,20 @@ impl MemoryPool {
     self.pool
   }
   
-  pub fn alloc(&mut self, buffer: *mut u8, size: i64) -> Result<*mut u8, ArrowError> {
+  pub fn alloc(&mut self, size: i64) -> Result<*mut u8, ArrowError> {
     unsafe {
-      let s = mem_alloc(self.pool, buffer, size);
-      result_from_status!(s, buffer)
-//      if status::ok(s) {
-//        Ok(buffer)
-//      } else {
-//        Err(ArrowError::new(s))
-//      }
+      let buf: *mut u8 = ptr::null_mut();
+      let s = mem_alloc(self.pool, buf, size);
+      result_from_status!(s, buf)
     }
+  }
+
+  pub fn free(&mut self, buf: *mut u8, size: i64) {
+    unsafe { mem_free(self.pool, buf, size) }
+  }
+
+  pub fn len(&self) -> i64 {
+    unsafe { num_bytes_alloc(self.pool) }
   }
 }
 
