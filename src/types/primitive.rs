@@ -4,9 +4,10 @@ use ty::{RawDataTypePtr, DataType, Ty};
 use ty;
 use common::memory_pool::{RawMemoryPoolMutPtr, MemoryPool};
 use common::status::{RawStatusPtr, ArrowError};
+use std::mem;
+
 #[macro_use]
 use common::status;
-use std::mem;
 
 pub trait PrimitiveArray<T, Ty=Self> : Array<Ty> {
   fn raw_data(&self) -> *const T;
@@ -115,53 +116,57 @@ define_array!(F32Array, f32);
 define_array!(F64Array, f64);
 
 macro_rules! define_array_builder {
-  ($name:ident) => (pub enum $name {});
+  ($builder_name:ident, $array_name:ident, $ty:ident) => (
+    pub struct $builder_name {
+      raw_builder: *mut concat_idents!(Raw, $builder_name)
+    }
+
+    impl $builder_name {
+      pub fn new(pool: MemoryPool, data_type: &DataType) -> $builder_name {
+        $builder_name {
+          raw_builder: unsafe { concat_idents!(new_, $ty, _arr_builder) (pool.raw_memory_pool(), data_type.raw_data_type()) }
+        }
+      }
+
+      pub fn init(&mut self, capacity: i32) -> Result<&mut $builder_name, ArrowError> {
+        unsafe {
+          let s = concat_idents!(init_, $ty, _arr_builder) (self.raw_builder, capacity);
+          result_from_status!(s, self)
+        }
+      }
+
+      pub fn append(&mut self, values: &[$ty], valid_bytes: *const u8) -> Result<&mut $builder_name, ArrowError> {
+        unsafe {
+          let s = concat_idents!(append_, $ty, _arr_builder) (self.raw_builder, values.as_ptr(), values.len() as i32, valid_bytes);
+          result_from_status!(s, self)
+        }
+      }
+
+      pub fn finish(&mut self) -> $array_name {
+        $array_name {
+          raw_array: unsafe { concat_idents!(finish_, $ty, _arr_builder) (self.raw_builder) }
+        }
+      }
+    }
+
+    impl Drop for $builder_name {
+      fn drop(&mut self) {
+        unsafe { concat_idents!(release_, $ty, _arr_builder) (self.raw_builder); }
+      }
+    }
+  );
 }
 
-pub struct U8ArrayBuilder {
-  raw_builder: *mut RawU8ArrayBuilder
-}
-
-impl U8ArrayBuilder {
-  pub fn new(pool: MemoryPool, data_type: &DataType) -> U8ArrayBuilder {
-    U8ArrayBuilder {
-      raw_builder: unsafe { new_u8_arr_builder(pool.raw_memory_pool(), data_type.raw_data_type()) }
-    }
-  }
-
-  pub fn init(&mut self, capacity: i32) -> Result<&mut U8ArrayBuilder, ArrowError> {
-    unsafe {
-      let s = init_u8_arr_builder(self.raw_builder, capacity);
-      result_from_status!(s, self)
-    }
-  }
-
-//  pub fn append(&mut self, values: *const u8, len: i32, valid_bytes: *const u8) -> Result<&mut U8ArrayBuilder, ArrowError> {
-//    unsafe {
-//      let s = append_u8_arr_builder(self.raw_builder, values, len, valid_bytes);
-//      result_from_status!(s, self)
-//    }
-//  }
-
-  pub fn append(&mut self, values: &[u8], valid_bytes: *const u8) -> Result<&mut U8ArrayBuilder, ArrowError> {
-    unsafe {
-      let s = append_u8_arr_builder(self.raw_builder, values.as_ptr(), values.len() as i32, valid_bytes);
-      result_from_status!(s, self)
-    }
-  }
-
-  pub fn finish(&mut self) -> U8Array {
-    U8Array {
-      raw_array: unsafe { finish_u8_arr_builder(self.raw_builder) }
-    }
-  }
-}
-
-impl Drop for U8ArrayBuilder {
-  fn drop(&mut self) {
-    unsafe { release_u8_arr_builder(self.raw_builder); }
-  }
-}
+define_array_builder!(U8ArrayBuilder, U8Array, u8);
+define_array_builder!(I8ArrayBuilder, I8Array, i8);
+define_array_builder!(U16ArrayBuilder, U16Array, u16);
+define_array_builder!(I16ArrayBuilder, I16Array, i16);
+define_array_builder!(U32ArrayBuilder, U32Array, u32);
+define_array_builder!(I32ArrayBuilder, I32Array, i32);
+define_array_builder!(U64ArrayBuilder, U64Array, u64);
+define_array_builder!(I64ArrayBuilder, I64Array, i64);
+define_array_builder!(F32ArrayBuilder, F32Array, f32);
+define_array_builder!(F64ArrayBuilder, F64Array, f64);
 
 extern "C" {
   pub fn arr_data(arr: RawArrayPtr) -> RawBufferPtr;
