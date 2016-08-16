@@ -53,7 +53,7 @@ macro_rules! define_array {
 
     impl Drop for $name {
       fn drop(&mut self) {
-        unsafe { release_arr(self.raw_array) }
+        unsafe { release_arr(self.raw_array); }
       }
     }
 
@@ -123,7 +123,7 @@ pub struct U8ArrayBuilder {
 }
 
 impl U8ArrayBuilder {
-  pub fn new(pool: MemoryPool, data_type: DataType) -> U8ArrayBuilder {
+  pub fn new(pool: MemoryPool, data_type: &DataType) -> U8ArrayBuilder {
     U8ArrayBuilder {
       raw_builder: unsafe { new_u8_arr_builder(pool.raw_memory_pool(), data_type.raw_data_type()) }
     }
@@ -136,9 +136,16 @@ impl U8ArrayBuilder {
     }
   }
 
-  pub fn append(&mut self, values: *const u8, len: i32, valid_bytes: *const u8) -> Result<&mut U8ArrayBuilder, ArrowError> {
+//  pub fn append(&mut self, values: *const u8, len: i32, valid_bytes: *const u8) -> Result<&mut U8ArrayBuilder, ArrowError> {
+//    unsafe {
+//      let s = append_u8_arr_builder(self.raw_builder, values, len, valid_bytes);
+//      result_from_status!(s, self)
+//    }
+//  }
+
+  pub fn append(&mut self, values: &[u8], valid_bytes: *const u8) -> Result<&mut U8ArrayBuilder, ArrowError> {
     unsafe {
-      let s = append_u8_arr_builder(self.raw_builder, values, len, valid_bytes);
+      let s = append_u8_arr_builder(self.raw_builder, values.as_ptr(), values.len() as i32, valid_bytes);
       result_from_status!(s, self)
     }
   }
@@ -147,6 +154,12 @@ impl U8ArrayBuilder {
     U8Array {
       raw_array: unsafe { finish_u8_arr_builder(self.raw_builder) }
     }
+  }
+}
+
+impl Drop for U8ArrayBuilder {
+  fn drop(&mut self) {
+    unsafe { release_u8_arr_builder(self.raw_builder); }
   }
 }
 
@@ -218,4 +231,15 @@ extern "C" {
   pub fn finish_i64_arr_builder(builder: *mut RawI64ArrayBuilder) -> RawArrayPtr;
   pub fn finish_f32_arr_builder(builder: *mut RawF32ArrayBuilder) -> RawArrayPtr;
   pub fn finish_f64_arr_builder(builder: *mut RawF64ArrayBuilder) -> RawArrayPtr;
+
+  pub fn release_u8_arr_builder(builder: *mut RawU8ArrayBuilder);
+  pub fn release_i8_arr_builder(builder: *mut RawI8ArrayBuilder);
+  pub fn release_u16_arr_builder(builder: *mut RawU16ArrayBuilder);
+  pub fn release_i16_arr_builder(builder: *mut RawI16ArrayBuilder);
+  pub fn release_u32_arr_builder(builder: *mut RawU32ArrayBuilder);
+  pub fn release_i32_arr_builder(builder: *mut RawI32ArrayBuilder);
+  pub fn release_u64_arr_builder(builder: *mut RawU64ArrayBuilder);
+  pub fn release_i64_arr_builder(builder: *mut RawI64ArrayBuilder);
+  pub fn release_f32_arr_builder(builder: *mut RawF32ArrayBuilder);
+  pub fn release_f64_arr_builder(builder: *mut RawF64ArrayBuilder);
 }

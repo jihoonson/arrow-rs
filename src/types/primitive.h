@@ -44,10 +44,14 @@ using namespace arrow;
     ArrayBox* arr = new ArrayBox; \
     arr->sp = builder->Finish();  \
     arr->p = arr->sp.get(); \
-    arr->type = new DataTypeBox;  \
-    arr->type->sp = arr->p->type(); \
-    arr->type->p = arr->type->sp.get(); \
     return arr; \
+  }
+
+#define RELEASE_ARRAY_BUILDER_DECL(NAME, RS_TYPE) \
+  void release_##RS_TYPE##_arr_builder(NAME* builder) { \
+    if (builder) {  \
+      delete builder; \
+    } \
   }
 
 extern "C" {
@@ -130,6 +134,17 @@ extern "C" {
   FINISH_ARRAY_BUILDER_DECL(Int64Builder, i64);
   FINISH_ARRAY_BUILDER_DECL(FloatBuilder, f32);
   FINISH_ARRAY_BUILDER_DECL(DoubleBuilder, f64);
+
+  RELEASE_ARRAY_BUILDER_DECL(UInt8Builder, u8);
+  RELEASE_ARRAY_BUILDER_DECL(Int8Builder, i8);
+  RELEASE_ARRAY_BUILDER_DECL(UInt16Builder, u16);
+  RELEASE_ARRAY_BUILDER_DECL(Int16Builder, i16);
+  RELEASE_ARRAY_BUILDER_DECL(UInt32Builder, u32);
+  RELEASE_ARRAY_BUILDER_DECL(Int32Builder, i32);
+  RELEASE_ARRAY_BUILDER_DECL(UInt64Builder, u64);
+  RELEASE_ARRAY_BUILDER_DECL(Int64Builder, i64);
+  RELEASE_ARRAY_BUILDER_DECL(FloatBuilder, f32);
+  RELEASE_ARRAY_BUILDER_DECL(DoubleBuilder, f64);
 }
 
 #endif

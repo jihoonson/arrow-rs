@@ -12,6 +12,7 @@ use common;
 // nested type consisting of other data types, or another data type (e.g. a
 // timestamp encoded as an int64)
 // See arrow::Type
+#[derive(Debug)]
 #[repr(C)]
 pub enum Ty {
   // A degenerate NULL type represented as 0 bytes/bits
@@ -157,7 +158,7 @@ impl DataType {
   }
 }
 
-impl PartialEq for DataType {
+impl PartialEq<DataType> for DataType {
   fn eq(&self, other: &DataType) -> bool {
     unsafe {
       data_type_equals(self.raw_type, other.raw_type)

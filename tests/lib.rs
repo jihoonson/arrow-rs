@@ -178,7 +178,7 @@ mod tests {
   }
 
   #[test]
-  fn test_array() {
+  fn test_raw_array() {
 
     unsafe {
       // FIXME: using the single memory pool makes difficult to verify the amount of allocated memory
@@ -208,6 +208,32 @@ mod tests {
       array::release_arr(arr);
 
       assert_eq!(mem_before, memory_pool::num_bytes_alloc(pool));
+    }
+  }
+
+  #[test]
+  fn test_array() {
+    use arrow::common::memory_pool::MemoryPool;
+    use arrow::ty::{DataTypeProvider, DataType};
+    use arrow::types::primitive::{U8ArrayBuilder, PrimitiveArray};
+    use arrow::array::Array;
+
+    let ty_provider = DataTypeProvider::new();
+    let pool = MemoryPool::default();
+
+    let mut builder = U8ArrayBuilder::new(pool, ty_provider.u8());
+    let values: Vec<u8> = (0..32).collect();
+
+    let mut builder = match builder.append(&values, ptr::null()) {
+      Ok(builder) => builder,
+      Err(e) => panic!("append failed: {}", e.message())
+    };
+    let array = builder.finish();
+    assert_eq!(ty_provider.u8(), &array.data_type());
+    assert_eq!(32, array.len());
+
+    for i in 0..32 {
+      assert_eq!(i as u8, array.value(i));
     }
   }
 

@@ -13,7 +13,10 @@ int32_t arr_null_count(ArrayBox* arr) {
 }
 
 DataTypeBox* arr_type(ArrayBox* arr) {
-  return arr->type;
+  DataTypeBox* type = new DataTypeBox;
+  type->sp = arr->p->type();
+  type->p = type->sp.get();
+  return type;
 }
 
 Type::type arr_type_enum(ArrayBox* arr) {
@@ -40,13 +43,11 @@ ArrayBox* new_null_arr(DataTypeBox* type, int32_t length) {
   ArrayBox* arr = new ArrayBox;
   arr->sp = std::make_shared<NullArray>(type->sp, length);
   arr->p = arr->sp.get();
-  arr->type = type;
   return arr;
 }
 
 void release_arr(ArrayBox* arr) {
   if (arr) {
-    delete arr->type;
     delete arr;
   }
 }

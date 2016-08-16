@@ -11,7 +11,6 @@ using namespace arrow;
 struct ArrayBox {
   std::shared_ptr<Array> sp;
   Array* p;
-  DataTypeBox* type;
 };
 
 extern "C" {
