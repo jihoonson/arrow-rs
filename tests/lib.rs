@@ -221,7 +221,7 @@ mod tests {
     let ty_provider = DataTypeProvider::new();
     let pool = MemoryPool::default();
 
-    let mut builder = U8ArrayBuilder::new(pool, ty_provider.u8());
+    let mut builder = U8ArrayBuilder::new(&pool, ty_provider.u8());
     let values: Vec<u8> = (0..32).collect();
 
     let mut builder = match builder.append(&values, ptr::null()) {
@@ -238,7 +238,7 @@ mod tests {
   }
 
   #[test]
-  fn test_column() {
+  fn test_raw_column() {
 
     unsafe {
       let pool = memory_pool::default_mem_pool();
@@ -271,7 +271,35 @@ mod tests {
   }
 
   #[test]
-  fn test_row_batch() {
+  fn test_column() {
+    use arrow::common::memory_pool::MemoryPool;
+    use arrow::ty::{DataTypeProvider, DataType, Field};
+    use arrow::types::primitive::{F32ArrayBuilder, PrimitiveArray};
+    use arrow::array::Array;
+    use arrow::column::Column;
+
+    let type_provider = DataTypeProvider::new();
+    let pool = MemoryPool::default();
+    let f1 = Field::new(String::from("f1"), type_provider.f32(), false);
+    let values: Vec<f32> = (0..32).map(|i| i as f32).collect();
+    let mut builder = F32ArrayBuilder::new(&pool, type_provider.f32());
+
+    builder.append(&values, ptr::null());
+    let array = builder.finish();
+    assert_eq!(32, array.len());
+
+    let col = Column::from_array(f1, array.as_base());
+    assert_eq!(32, col.len());
+    assert_eq!(0, col.null_count());
+    assert_eq!(type_provider.f32(), &col.data_type());
+    let arrays = match col.validate_data() {
+      Ok(arrays) => arrays,
+      Err(e) => panic!("column data validation failed: {}", e.message())
+    };
+  }
+
+  #[test]
+  fn test_raw_row_batch() {
     unsafe {
       let pool = memory_pool::default_mem_pool();
       let f32_ty = ty::new_primitive_type(ty::Ty::FLOAT);
@@ -298,6 +326,37 @@ mod tests {
       ty::release_field(f1);
       ty::release_data_type(f32_ty);
     }
+  }
+
+  #[test]
+  fn test_row_batch() {
+    use arrow::common::memory_pool::MemoryPool;
+    use arrow::ty::{DataTypeProvider, DataType, Field, Schema};
+    use arrow::types::primitive::{F32ArrayBuilder, I32ArrayBuilder, PrimitiveArray};
+    use arrow::array::Array;
+    use arrow::table::RowBatch;
+
+    let type_provider = DataTypeProvider::new();
+    let pool = MemoryPool::default();
+    let f1 = Field::new(String::from("f1"), type_provider.i32(), false);
+    let f2 = Field::new(String::from("f2"), type_provider.f32(), true);
+    let schema = Schema::new(&[f1, f2]);
+    let values1: Vec<i32> = (0..100).map(|i| i as i32).collect();
+    let values2: Vec<f32> = (0..100).map(|i| i as f32).collect();
+
+    let mut builder1 = I32ArrayBuilder::new(&pool, type_provider.i32());
+    let mut builder2 = F32ArrayBuilder::new(&pool, type_provider.f32());
+    builder1.append(&values1, ptr::null());
+    builder2.append(&values2, ptr::null());
+
+    let arrays = [builder1.finish_as_base(), builder2.finish_as_base()];
+    let row_batch = RowBatch::new(&schema, 100, &arrays);
+
+    assert_eq!(schema, row_batch.schema());
+    assert_eq!(&arrays[0], &row_batch.column(0));
+    assert_eq!(&arrays[1], &row_batch.column(1));
+    assert_eq!(100, row_batch.row_num());
+    assert_eq!(2, row_batch.column_num());
   }
 
   #[test]

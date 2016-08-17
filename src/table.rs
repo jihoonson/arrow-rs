@@ -15,7 +15,7 @@ pub struct RowBatch {
 }
 
 impl RowBatch {
-  pub fn new(schema: Schema, num_rows: i32, arrays: &[BaseArray]) -> RowBatch {
+  pub fn new(schema: &Schema, num_rows: i32, arrays: &[BaseArray]) -> RowBatch {
     let raw_arrays = arrays.into_iter().map(|array| array.raw_array()).collect::<Vec<RawArrayPtr>>();
     RowBatch {
       raw_batch: unsafe { new_row_batch(schema.raw_schema(), num_rows, &raw_arrays, arrays.len() as i32)}

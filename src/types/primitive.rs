@@ -59,8 +59,8 @@ macro_rules! define_array {
     }
 
     impl Array for $name {
-      fn reinterpret(array: &BaseArray) -> &$name {
-        unsafe { mem::transmute(array) }
+      fn as_base(&self) -> &BaseArray {
+        unsafe { mem::transmute(self) }
       }
 
       fn is_null(&self, i: i32) -> bool {
@@ -122,7 +122,7 @@ macro_rules! define_array_builder {
     }
 
     impl $builder_name {
-      pub fn new(pool: MemoryPool, data_type: &DataType) -> $builder_name {
+      pub fn new(pool: &MemoryPool, data_type: &DataType) -> $builder_name {
         $builder_name {
           raw_builder: unsafe { concat_idents!(new_, $ty, _arr_builder) (pool.raw_memory_pool(), data_type.raw_data_type()) }
         }
@@ -146,6 +146,11 @@ macro_rules! define_array_builder {
         $array_name {
           raw_array: unsafe { concat_idents!(finish_, $ty, _arr_builder) (self.raw_builder) }
         }
+      }
+
+      pub fn finish_as_base(&mut self) -> BaseArray {
+        let arr = self.finish();
+        unsafe { mem::transmute(arr) }
       }
     }
 

@@ -1,12 +1,13 @@
-use ty::{DataType, RawDataTypePtr, Ty};
 use ty;
+use ty::{DataType, RawDataTypePtr, Ty};
 use buffer::{Buf, Buffer};
 use types::primitive;
+use std::mem;
 
 // TODO: inheritance relationship for Array and its sub classes
 
 pub trait Array<Ty=Self> {
-  fn reinterpret(array: &BaseArray) -> &Ty;
+  fn as_base(&self) -> &BaseArray;
 
   fn is_null(&self, i: i32) -> bool;
 
@@ -27,6 +28,7 @@ pub trait Array<Ty=Self> {
   fn new_null_array(length: i32) -> Ty;
 }
 
+#[derive(Debug)]
 pub struct BaseArray {
   raw_array: RawArrayPtr
 }
@@ -41,6 +43,11 @@ impl BaseArray {
   pub fn raw_array(&self) -> RawArrayPtr {
     self.raw_array
   }
+
+  // TODO: implement easy casting from BaseArray
+//  pub fn reinterpret<T>(&self) -> T {
+//    unsafe { mem::transmute(self) }
+//  }
 }
 
 impl Array for BaseArray {
@@ -81,8 +88,8 @@ impl Array for BaseArray {
     unimplemented!()
   }
 
-  fn reinterpret(array: &BaseArray) -> &BaseArray {
-    &array
+  fn as_base(&self) -> &BaseArray {
+    &self
   }
 }
 
