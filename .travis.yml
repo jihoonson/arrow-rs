@@ -1,0 +1,11 @@
+language: rust
+rust:
+  - nightly
+
+script:
+  - cargo build --verbose
+  - cargo test
+
+notifications:
+  email:
+    - jihoonson@apache.org
