@@ -32,7 +32,8 @@ mod benchmarks {
   use common::status;
 
   #[bench]
-  fn bench_adapter(b: &mut Bencher) {
+  fn bench_raw_adapter(b: &mut Bencher) {
+    let file_name = "bench_raw_adapter.dat";
     unsafe {
       let pool = memory_pool::default_mem_pool();
       let f32_ty = ty::new_primitive_type(ty::Ty::FLOAT);
@@ -51,11 +52,11 @@ mod benchmarks {
 
       let batch_size = adapter::c_api::get_row_batch_size(row_batch);
 
-      let mut f = File::create("bench_adapter.dat").unwrap();
+      let mut f = File::create(file_name).unwrap();
       f.set_len(batch_size as u64).unwrap();
       f.sync_all().unwrap();
 
-      let src = memory::open_mmap_src(CString::new("bench_adapter.dat").unwrap().as_ptr(),
+      let src = memory::open_mmap_src(CString::new(file_name).unwrap().as_ptr(),
                                       memory::AccessMode::READ_WRITE);
       let header_pos = adapter::c_api::write_row_batch(src, row_batch, 0, 64);
 
@@ -64,7 +65,7 @@ mod benchmarks {
       memory::release_mmap_src(src);
       table::release_row_batch(row_batch);
 
-      let src = memory::open_mmap_src(CString::new("bench_adapter.dat").unwrap().as_ptr(),
+      let src = memory::open_mmap_src(CString::new(file_name).unwrap().as_ptr(),
                                       memory::AccessMode::READ_ONLY);
 
       let reader = adapter::c_api::open_row_batch_reader(src, header_pos);
@@ -73,15 +74,6 @@ mod benchmarks {
       let col = table::row_batch_column(row_batch, 0);
 
       b.iter(|| {
-//        let mut result : Vec<f32> = Vec::new();
-//
-//        for i in 0..val_len {
-//          let f = primitive::f32_arr_value(col, i);
-//          if f >= 10000. && f < 100000. {
-//            result.push(f);
-//          }
-//        }
-
         let result = (0..val_len).filter(|i| {
           let f = primitive::f32_arr_value(col, *i);
           f >= 10000. && f < 100000.
@@ -101,6 +93,62 @@ mod benchmarks {
       ty::release_data_type(f32_ty);
     }
 
-    fs::remove_file("bench_adapter.dat").unwrap();
+    fs::remove_file(file_name).unwrap();
+  }
+
+  #[bench]
+  fn bench_adapter(b: &mut Bencher) {
+    use common::memory_pool::MemoryPool;
+    use ty::{DataTypeProvider, Schema, Field};
+    use types::primitive::{I32Array, F32Array, I32ArrayBuilder, F32ArrayBuilder, PrimitiveArray};
+    use table::RowBatch;
+    use ipc::memory::MemoryMappedSource;
+    use array::Array;
+
+    let type_provider = DataTypeProvider::new();
+    let pool = MemoryPool::default();
+    let f1 = Field::new(String::from("key"), type_provider.i32(), false);
+    let f2 = Field::new(String::from("payload"), type_provider.f32(), false);
+    let schema = Schema::new(&[&f1, &f2]);
+    let values1: Vec<i32> = (0..1000000).map(|i| i as i32).collect();
+    let values2: Vec<f32> = (0..1000000).map(|i| i as f32).collect();
+    let val_len = values1.len() as i32;
+
+    let mut builder1 = I32ArrayBuilder::new(&pool, type_provider.i32());
+    let mut builder2 = F32ArrayBuilder::new(&pool, type_provider.f32());
+    builder1.append(&values1, ptr::null());
+    builder2.append(&values2, ptr::null());
+
+    let arrays = [builder1.finish_as_base(), builder2.finish_as_base()];
+    let row_batch = RowBatch::new(&schema, val_len, &arrays);
+    let batch_size = row_batch.size();
+
+    let file_name = "bench_adapter.dat";
+    let mut f = File::create(file_name).unwrap();
+    f.set_len(batch_size as u64).unwrap();
+    f.sync_all().unwrap();
+
+    let src = MemoryMappedSource::open(String::from(file_name), memory::AccessMode::READ_WRITE);
+    let header_pos = adapter::write_row_batch(&src, &row_batch, 0);
+    src.close();
+
+    let src = MemoryMappedSource::open(String::from(file_name), memory::AccessMode::READ_ONLY);
+    let reader = adapter::RowBatchReader::open(&src, header_pos);
+    let row_batch = reader.read(&schema);
+    let key_base_col = row_batch.column(0);
+    let payload_base_col = row_batch.column(1);
+    let key_col = I32Array::from_base(&key_base_col);
+    let payload_col = F32Array::from_base(&payload_base_col);
+
+    b.iter(|| {
+      let result = (0..val_len).filter(|i| {
+        let key = key_col.value(*i);
+        key >= 10000 && key < 100000
+      }).map(|i| payload_col.value(i)).collect::<Vec<f32>>();
+    });
+
+    src.close();
+
+    fs::remove_file(file_name).unwrap();
   }
 }

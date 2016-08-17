@@ -59,6 +59,10 @@ macro_rules! define_array {
     }
 
     impl Array for $name {
+      fn from_base(array: &BaseArray) -> &$name {
+        unsafe { mem::transmute(array) }
+      }
+
       fn as_base(&self) -> &BaseArray {
         unsafe { mem::transmute(self) }
       }

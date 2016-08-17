@@ -7,6 +7,8 @@ use std::mem;
 // TODO: inheritance relationship for Array and its sub classes
 
 pub trait Array<Ty=Self> {
+  fn from_base(array: &BaseArray) -> &Ty;
+
   fn as_base(&self) -> &BaseArray;
 
   fn is_null(&self, i: i32) -> bool;
@@ -90,6 +92,10 @@ impl Array for BaseArray {
 
   fn as_base(&self) -> &BaseArray {
     &self
+  }
+
+  fn from_base(array: &BaseArray) -> &BaseArray {
+    &array
   }
 }
 
