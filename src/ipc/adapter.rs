@@ -22,7 +22,7 @@ use ty::Schema;
 //  }
 //}
 
-pub fn write_row_batch(src: MemoryMappedSource, batch: RowBatch, pos: i64) -> i64 {
+pub fn write_row_batch(src: &MemoryMappedSource, batch: &RowBatch, pos: i64) -> i64 {
   unsafe { c_api::write_row_batch(src.raw_source(), batch.raw_batch(), pos, 64) }
 }
 
@@ -31,13 +31,13 @@ pub struct RowBatchReader {
 }
 
 impl RowBatchReader {
-  pub fn open(src: MemoryMappedSource, pos: i64) -> RowBatchReader {
+  pub fn open(src: &MemoryMappedSource, pos: i64) -> RowBatchReader {
     RowBatchReader {
       raw_reader: unsafe { c_api::open_row_batch_reader(src.raw_source(), pos) }
     }
   }
 
-  pub fn read(&self, schema: Schema) -> RowBatch {
+  pub fn read(&self, schema: &Schema) -> RowBatch {
     RowBatch::from_raw( unsafe { c_api::get_row_batch(self.raw_reader, schema.raw_schema()) } )
   }
 }

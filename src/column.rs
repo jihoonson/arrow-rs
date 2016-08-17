@@ -37,7 +37,7 @@ impl Column {
     }
   }
 
-  pub fn from_array(field: Field, array: &BaseArray) -> Column {
+  pub fn from_array(field: &Field, array: &BaseArray) -> Column {
     Column {
       raw_column: unsafe { new_column_from_arr(field.raw_field(), array.raw_array()) }
     }

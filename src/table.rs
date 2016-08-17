@@ -68,7 +68,7 @@ pub struct Table {
 }
 
 impl Table {
-  pub fn new(name: String, schema: Schema, columns: &[Column]) -> Table {
+  pub fn new(name: String, schema: &Schema, columns: &[Column]) -> Table {
     let raw_cols = columns.into_iter().map(|col| col.raw_column()).collect::<Vec<RawColumnPtr>>();
     Table {
       raw_table: unsafe { new_table(string_to_cstr!(name), schema.raw_schema(), &raw_cols, columns.len() as i32)}

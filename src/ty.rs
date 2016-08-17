@@ -285,7 +285,7 @@ impl Drop for Field {
 }
 
 impl Schema {
-  pub fn new(fields: &[Field]) -> Schema {
+  pub fn new(fields: &[&Field]) -> Schema {
     let raw_fields: Vec<RawFieldPtr> = fields.into_iter().map(|f| f.raw_field).collect::<Vec<RawFieldPtr>>();
     unsafe {
       Schema {

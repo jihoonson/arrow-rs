@@ -103,13 +103,13 @@ mod tests {
     let f2 = Field::new(String::from("f2"), ty_provider.f32(), false);
     let f3 = Field::new(String::from("f3"), ty_provider.u64(), true);
 
-    let schema = Schema::new(&[f1, f2, f3]);
+    let schema = Schema::new(&[&f1, &f2, &f3]);
     assert_eq!(String::from("f1: int32 not null\nf2: float not null\nf3: uint64"), schema.to_string());
 
     let f1 = Field::new(String::from("f1"), ty_provider.i32(), false);
     let f2 = Field::new(String::from("f2"), ty_provider.f32(), false);
     let f3 = Field::new(String::from("f3"), ty_provider.u64(), true);
-    let schema2 = Schema::new(&[f1, f2, f3]);
+    let schema2 = Schema::new(&[&f1, &f2, &f3]);
 
     assert_eq!(schema, schema2);
   }
@@ -288,7 +288,7 @@ mod tests {
     let array = builder.finish();
     assert_eq!(32, array.len());
 
-    let col = Column::from_array(f1, array.as_base());
+    let col = Column::from_array(&f1, array.as_base());
     assert_eq!(32, col.len());
     assert_eq!(0, col.null_count());
     assert_eq!(type_provider.f32(), &col.data_type());
@@ -340,7 +340,7 @@ mod tests {
     let pool = MemoryPool::default();
     let f1 = Field::new(String::from("f1"), type_provider.i32(), false);
     let f2 = Field::new(String::from("f2"), type_provider.f32(), true);
-    let schema = Schema::new(&[f1, f2]);
+    let schema = Schema::new(&[&f1, &f2]);
     let values1: Vec<i32> = (0..100).map(|i| i as i32).collect();
     let values2: Vec<f32> = (0..100).map(|i| i as f32).collect();
 
@@ -360,7 +360,7 @@ mod tests {
   }
 
   #[test]
-  fn test_table() {
+  fn test_raw_table() {
     unsafe {
       let pool = memory_pool::default_mem_pool();
       let f32_ty = ty::new_primitive_type(ty::Ty::FLOAT);
@@ -394,13 +394,49 @@ mod tests {
   }
 
   #[test]
-  fn test_mem_src() {
-    let mut f = File::create("test_mem_src.dat").unwrap();
+  fn test_table() {
+    use arrow::common::memory_pool::MemoryPool;
+    use arrow::ty::{DataTypeProvider, DataType, Field, Schema};
+    use arrow::types::primitive::{F32ArrayBuilder, I32ArrayBuilder, PrimitiveArray};
+    use arrow::array::Array;
+    use arrow::table::Table;
+    use arrow::column::Column;
+
+    let type_provider = DataTypeProvider::new();
+    let pool = MemoryPool::default();
+    let f1 = Field::new(String::from("f1"), type_provider.i32(), false);
+    let f2 = Field::new(String::from("f2"), type_provider.f32(), true);
+    let schema = Schema::new(&[&f1, &f2]);
+    let values1: Vec<i32> = (0..100).map(|i| i as i32).collect();
+    let values2: Vec<f32> = (0..100).map(|i| i as f32).collect();
+
+    let mut builder1 = I32ArrayBuilder::new(&pool, type_provider.i32());
+    let mut builder2 = F32ArrayBuilder::new(&pool, type_provider.f32());
+    builder1.append(&values1, ptr::null());
+    builder2.append(&values2, ptr::null());
+
+    let arrays = [builder1.finish_as_base(), builder2.finish_as_base()];
+    let cols = [Column::from_array(&f1, &arrays[0]), Column::from_array(&f2, &arrays[1])];
+    let table = Table::new(String::from("t1"), &schema, &cols);
+
+    assert_eq!(schema, table.schema());
+    assert_eq!(2, table.column_num());
+    assert_eq!(100, table.row_num());
+    let table = match table.validate_columns() {
+      Ok(table) => table,
+      Err(e) => panic!("table validation failed: {}", e.message())
+    };
+  }
+
+  #[test]
+  fn test_raw_mem_src() {
+    let file_name = "test_raw_mem_src.dat";
+    let mut f = File::create(file_name).unwrap();
     f.set_len(32).unwrap();
     f.sync_all().unwrap();
 
     unsafe {
-      let src = memory::open_mmap_src(CString::new("test_mem_src.dat").unwrap().as_ptr(),
+      let src = memory::open_mmap_src(CString::new(file_name).unwrap().as_ptr(),
                                       memory::AccessMode::READ_WRITE);
       let values: Vec<u8> = (0..32).collect();
       let origin = values.clone();
@@ -413,7 +449,7 @@ mod tests {
       status::release_status(s);
       memory::release_mmap_src(src);
 
-      let src = memory::open_mmap_src(CString::new("test_mem_src.dat").unwrap().as_ptr(),
+      let src = memory::open_mmap_src(CString::new(file_name).unwrap().as_ptr(),
                                       memory::AccessMode::READ_ONLY);
       let buf = memory::read_at_mmap_src(src, 0, 32);
       let v = slice::from_raw_parts(buffer::buf_data(buf), 32);
@@ -426,11 +462,48 @@ mod tests {
       memory::release_mmap_src(src);
     }
 
-    fs::remove_file("test_mem_src.dat").unwrap();
+    fs::remove_file(file_name).unwrap();
   }
 
   #[test]
-  fn test_adapter() {
+  fn test_mem_src() {
+    use arrow::buffer::Buffer;
+    use arrow::ipc::memory::MemoryMappedSource;
+
+    let file_name = "test_mem_src.dat";
+    let mut f = File::create(file_name).unwrap();
+    f.set_len(32).unwrap();
+    f.sync_all().unwrap();
+
+    let values: Vec<u8> = (0..32).collect();
+    let origin = values.clone();
+
+    let src = MemoryMappedSource::open(String::from(file_name), memory::AccessMode::READ_WRITE);
+    let src = match src.write(0, values.as_ptr(), 32) {
+      Ok(src) => src,
+      Err(e) => panic!("write failed: {}", e.message())
+    };
+    let src = match src.close() {
+      Ok(src) => src,
+      Err(e) => panic!("close failed: {}", e.message())
+    };
+
+    let src = MemoryMappedSource::open(String::from(file_name), memory::AccessMode::READ_ONLY);
+    let buf = src.read(0, 32);
+    let s = unsafe { slice::from_raw_parts(buf.data(), 32) };
+    assert_eq!(&origin, &s);
+
+    let src = match src.close() {
+      Ok(src) => src,
+      Err(e) => panic!("close failed: {}", e.message())
+    };
+
+    fs::remove_file(file_name).unwrap();
+  }
+
+  #[test]
+  fn test_raw_adapter() {
+    let file_name = "test_raw_adapter.dat";
     unsafe {
       let pool = memory_pool::default_mem_pool();
       let f32_ty = ty::new_primitive_type(ty::Ty::FLOAT);
@@ -448,11 +521,11 @@ mod tests {
 
       let batch_size = adapter::c_api::get_row_batch_size(row_batch);
 
-      let mut f = File::create("test_adapter.dat").unwrap();
+      let mut f = File::create(file_name).unwrap();
       f.set_len(batch_size as u64).unwrap();
       f.sync_all().unwrap();
 
-      let src = memory::open_mmap_src(CString::new("test_adapter.dat").unwrap().as_ptr(),
+      let src = memory::open_mmap_src(CString::new(file_name).unwrap().as_ptr(),
                                       memory::AccessMode::READ_WRITE);
       let header_pos = adapter::c_api::write_row_batch(src, row_batch, 0, 64);
 
@@ -462,7 +535,7 @@ mod tests {
       memory::release_mmap_src(src);
       table::release_row_batch(row_batch);
 
-      let src = memory::open_mmap_src(CString::new("test_adapter.dat").unwrap().as_ptr(),
+      let src = memory::open_mmap_src(CString::new(file_name).unwrap().as_ptr(),
                                       memory::AccessMode::READ_ONLY);
 
       let reader = adapter::c_api::open_row_batch_reader(src, header_pos);
@@ -485,6 +558,66 @@ mod tests {
       ty::release_data_type(f32_ty);
     }
 
-    fs::remove_file("test_adapter.dat").unwrap();
+    fs::remove_file(file_name).unwrap();
+  }
+
+  #[test]
+  fn test_adapter() {
+    use arrow::buffer::Buffer;
+    use arrow::ipc::memory::MemoryMappedSource;
+    use arrow::common::memory_pool::MemoryPool;
+    use arrow::ty::{DataTypeProvider, DataType, Field, Schema};
+    use arrow::types::primitive::{F32ArrayBuilder, I32ArrayBuilder, PrimitiveArray};
+    use arrow::array::Array;
+    use arrow::table::RowBatch;
+    use arrow::ipc::adapter;
+    use arrow::ipc::adapter::RowBatchReader;
+
+    // prepare test
+    let type_provider = DataTypeProvider::new();
+    let pool = MemoryPool::default();
+    let f1 = Field::new(String::from("f1"), type_provider.i32(), false);
+    let f2 = Field::new(String::from("f2"), type_provider.f32(), true);
+    let schema = Schema::new(&[&f1, &f2]);
+    let values1: Vec<i32> = (0..100).map(|i| i as i32).collect();
+    let values2: Vec<f32> = (0..100).map(|i| i as f32).collect();
+
+    // create a row batch
+    let mut builder1 = I32ArrayBuilder::new(&pool, type_provider.i32());
+    let mut builder2 = F32ArrayBuilder::new(&pool, type_provider.f32());
+    builder1.append(&values1, ptr::null());
+    builder2.append(&values2, ptr::null());
+
+    let arrays = [builder1.finish_as_base(), builder2.finish_as_base()];
+    let row_batch = RowBatch::new(&schema, 100, &arrays);
+    let batch_size = row_batch.size();
+
+    let file_name = "test_adapter.dat";
+    let mut f = File::create(file_name).unwrap();
+    f.set_len(batch_size as u64).unwrap();
+    f.sync_all().unwrap();
+
+    // write row batch
+    let src = MemoryMappedSource::open(String::from(file_name), memory::AccessMode::READ_WRITE);
+    let header_pos = adapter::write_row_batch(&src, &row_batch, 0);
+
+    let src = match src.close() {
+      Ok(src) => src,
+      Err(e) => panic!("close failed: {}", e.message())
+    };
+
+    // read row batch
+    let src = MemoryMappedSource::open(String::from(file_name), memory::AccessMode::READ_ONLY);
+    let batch_reader = RowBatchReader::open(&src, header_pos);
+    let row_batch = batch_reader.read(&schema);
+    let col = row_batch.column(0);
+    assert_eq!(arrays[0], col);
+
+    let src = match src.close() {
+      Ok(src) => src,
+      Err(e) => panic!("close failed: {}", e.message())
+    };
+
+    fs::remove_file(file_name).unwrap();
   }
 }
