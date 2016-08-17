@@ -1,8 +1,9 @@
 [package]
 name = "arrow"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["Jihoon Son <jihoonson@apache.org>"]
 build = "build.rs"
+licence = "Apache-2.0"
 
 [lib]
 name = "arrow"
