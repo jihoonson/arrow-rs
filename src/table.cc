@@ -1,4 +1,5 @@
 #include "table.h"
+#include <cstring>
 
 RowBatchBox* new_row_batch(SchemaBox* schema, int num_rows, ArrayBox* arrays[], int arr_len) {
   std::vector<std::shared_ptr<Array>> arr_vec;

@@ -6,7 +6,6 @@
 #include "array.h"
 #include "common/status.h"
 #include "arrow/table.h"
-#include <iostream>
 
 using namespace arrow;
 

@@ -1,4 +1,5 @@
 #include "status.h"
+#include <cstring>
 
 extern "C" {
 //  StatusBox* new_status() {

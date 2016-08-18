@@ -1,5 +1,5 @@
 #include "ty.h"
-#include <iostream>
+#include <cstring>
 
 bool is_primitive_type(Type::type ty) {
   switch (ty) {
