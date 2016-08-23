@@ -173,6 +173,17 @@ SchemaBox* new_schema(int field_num, FieldBox* fields []) {
   return box;
 }
 
+FieldBox* get_schema_field(SchemaBox* schema, int i) {
+  FieldBox* field = new FieldBox;
+  field->sp = schema->p->field(i);
+  field->p = field->sp.get();
+  return field;
+}
+
+int schema_size(SchemaBox* schema) {
+  schema->p->num_fields();
+}
+
 bool schema_equals(SchemaBox* s1, SchemaBox* s2) {
   return s1->p->Equals(*(s2->p));
 }

@@ -53,6 +53,10 @@ extern "C" {
 
   SchemaBox* new_schema(int field_num, FieldBox* fields []);
 
+  FieldBox* get_schema_field(SchemaBox* schema, int i);
+
+  int schema_size(SchemaBox* schema);
+
   bool schema_equals(SchemaBox* s1, SchemaBox* s2);
 
   const char* schema_to_string(SchemaBox* schema);

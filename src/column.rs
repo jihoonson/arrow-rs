@@ -43,7 +43,7 @@ impl Column {
     }
   }
 
-  pub fn from_chunked_array(field: Field, array: ChunkedArray) -> Column {
+  pub fn from_chunked_array(field: Field, array: &ChunkedArray) -> Column {
     Column {
       raw_column: unsafe { new_column_from_chunked_arr(field.raw_field(), array.raw_array) }
     }

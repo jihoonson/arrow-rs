@@ -303,6 +303,16 @@ impl Schema {
   pub fn raw_schema(&self) -> RawSchemaPtr {
     self.raw_schema
   }
+
+  pub fn len(&self) -> i32 {
+    unsafe { schema_size(self.raw_schema) }
+  }
+
+  pub fn field(&self, i: i32) -> Field {
+    Field {
+      raw_field: unsafe { get_schema_field(self.raw_schema, i) }
+    }
+  }
 }
 
 impl PartialEq for Schema {
@@ -353,6 +363,8 @@ extern "C" {
   pub fn release_field(field: RawFieldPtr);
 
   pub fn new_schema(field_num: i32, fields: &[RawFieldPtr]) -> RawSchemaPtr;
+  pub fn get_schema_field(schema: RawSchemaPtr, i: i32) -> RawFieldPtr;
+  pub fn schema_size(schema: RawSchemaPtr) -> i32;
   pub fn schema_equals(s1: RawSchemaPtr, s2: RawSchemaPtr) -> bool;
   pub fn schema_to_string(schema: RawSchemaPtr) -> *const libc::c_char;
   pub fn release_schema(schema: RawSchemaPtr);
