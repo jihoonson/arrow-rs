@@ -59,12 +59,10 @@ macro_rules! define_array {
     }
 
     impl Array for $name {
-      fn from_base(array: &BaseArray) -> &$name {
-        unsafe { mem::transmute(array) }
-      }
-
-      fn as_base(&self) -> &BaseArray {
-        unsafe { mem::transmute(self) }
+      fn from_raw(raw_array: RawArrayPtr) -> $name {
+        $name {
+          raw_array: raw_array
+        }
       }
 
       fn is_null(&self, i: i32) -> bool {

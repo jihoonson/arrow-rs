@@ -1,21 +1,23 @@
 use ty;
 use ty::{Schema};
-#[macro_use]
-use common;
 use common::status;
 use common::status::{RawStatusPtr, ArrowError};
 use column::{RawColumnPtr, Column};
-use array::{RawArrayPtr, BaseArray};
+use array::{RawArrayPtr, Array};
+use ipc::adapter::c_api::get_row_batch_size;
 use libc;
 use std::ffi::{CStr, CString};
-use ipc::adapter::c_api::get_row_batch_size;
+use std::any::Any;
+
+#[macro_use]
+use common;
 
 pub struct RowBatch {
   raw_batch: RawRowBatchPtr
 }
 
 impl RowBatch {
-  pub fn new(schema: &Schema, num_rows: i32, arrays: &[BaseArray]) -> RowBatch {
+  pub fn new<T: Any + Array>(schema: &Schema, num_rows: i32, arrays: &[T]) -> RowBatch {
     let raw_arrays = arrays.into_iter().map(|array| array.raw_array()).collect::<Vec<RawArrayPtr>>();
     RowBatch {
       raw_batch: unsafe { new_row_batch(schema.raw_schema(), num_rows, &raw_arrays, arrays.len() as i32)}
@@ -36,8 +38,8 @@ impl RowBatch {
     Schema::from_raw( unsafe { row_batch_schema(self.raw_batch) } )
   }
 
-  pub fn column(&self, i: i32) -> BaseArray {
-    BaseArray::from_raw( unsafe { row_batch_column(self.raw_batch, i) } )
+  pub fn column<T: Any + Array>(&self, i: i32) -> T {
+    T::from_raw( unsafe { row_batch_column(self.raw_batch, i) } )
   }
 
   pub fn column_name(&self, i: i32) -> String {

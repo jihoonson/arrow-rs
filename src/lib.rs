@@ -135,10 +135,8 @@ mod benchmarks {
     let src = MemoryMappedSource::open(String::from(file_name), memory::AccessMode::READ_ONLY);
     let reader = adapter::RowBatchReader::open(&src, header_pos);
     let row_batch = reader.read(&schema);
-    let key_base_col = row_batch.column(0);
-    let payload_base_col = row_batch.column(1);
-    let key_col = I32Array::from_base(&key_base_col);
-    let payload_col = F32Array::from_base(&payload_base_col);
+    let key_col: I32Array = row_batch.column(0);
+    let payload_col: F32Array = row_batch.column(1);
 
     b.iter(|| {
       let result = (0..val_len).filter(|i| {

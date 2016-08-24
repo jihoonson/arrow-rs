@@ -1,8 +1,11 @@
+use common::status::{RawStatusPtr, ArrowError};
+use array::{RawArrayPtr, Array};
+use ty::{RawFieldPtr, RawDataTypePtr, Field, DataType};
+
+use std::any::Any;
+
 #[macro_use]
 use common::status;
-use common::status::{RawStatusPtr, ArrowError};
-use array::{RawArrayPtr, BaseArray};
-use ty::{RawFieldPtr, RawDataTypePtr, Field, DataType};
 
 pub struct ChunkedArray {
   raw_array: RawChunkedArrayPtr
@@ -13,7 +16,7 @@ pub struct Column {
 }
 
 impl ChunkedArray {
-  pub fn new(arrays: &[BaseArray]) -> ChunkedArray {
+  pub fn new<T: Any + Array>(arrays: &[T]) -> ChunkedArray {
     let raw_arrays = arrays.into_iter().map(|each_array| each_array.raw_array()).collect::<Vec<RawArrayPtr>>();
 
     ChunkedArray {
@@ -37,13 +40,13 @@ impl Column {
     }
   }
 
-  pub fn from_array(field: &Field, array: &BaseArray) -> Column {
+  pub fn from_array<T: Any + Array>(field: &Field, array: &T) -> Column {
     Column {
       raw_column: unsafe { new_column_from_arr(field.raw_field(), array.raw_array()) }
     }
   }
 
-  pub fn from_chunked_array(field: Field, array: &ChunkedArray) -> Column {
+  pub fn from_chunked_array(field: &Field, array: &ChunkedArray) -> Column {
     Column {
       raw_column: unsafe { new_column_from_chunked_arr(field.raw_field(), array.raw_array) }
     }

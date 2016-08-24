@@ -288,7 +288,7 @@ mod tests {
     let array = builder.finish();
     assert_eq!(32, array.len());
 
-    let col = Column::from_array(&f1, array.as_base());
+    let col = Column::from_array(&f1, &array);
     assert_eq!(32, col.len());
     assert_eq!(0, col.null_count());
     assert_eq!(type_provider.f32(), &col.data_type());
