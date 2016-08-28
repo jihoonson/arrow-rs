@@ -28,8 +28,6 @@ pub enum StatusCode {
     NotImplemented = 10,
 }
 
-pub type RawStatusPtr = *const RawStatus;
-
 pub struct ArrowError {
   code: StatusCode,
 //  posix_code: i16,
@@ -63,6 +61,8 @@ impl ArrowError {
 }
 
 pub enum RawStatus {}
+
+pub type RawStatusPtr = *const RawStatus;
 
 extern "C" {
 //  pub fn new_status() -> *mut Status;

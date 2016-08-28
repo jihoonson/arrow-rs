@@ -4,13 +4,17 @@ use ty::{RawDataTypePtr, DataType, Ty};
 use ty;
 use common::memory_pool::{RawMemoryPoolMutPtr, MemoryPool};
 use common::status::{RawStatusPtr, ArrowError};
+
 use std::mem;
+use std::slice;
 
 #[macro_use]
 use common::status;
 
 pub trait PrimitiveArray<T, Ty=Self> : Array<Ty> {
   fn raw_data(&self) -> *const T;
+
+  fn as_slice(&self) -> &[T];
 
   fn value(&self, i: i32) -> T;
 }
@@ -39,6 +43,10 @@ macro_rules! define_array {
     impl PrimitiveArray<$ty> for $name {
       fn raw_data(&self) -> *const $ty {
           unsafe { concat_idents!($ty, _arr_raw_data) (self.raw_array) }
+      }
+
+      fn as_slice(&self) -> &[$ty] {
+        unsafe { slice::from_raw_parts(self.raw_data(), self.len() as usize) }
       }
 
       fn value(&self, i: i32) -> $ty {

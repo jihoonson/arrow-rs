@@ -9,6 +9,11 @@
 
 using namespace arrow;
 
+struct ArrowResult {
+  void* result;
+  StatusBox* status;
+};
+
 struct RowBatchReaderBox {
   std::shared_ptr<ipc::RowBatchReader> sp;
   ipc::RowBatchReader* p;
@@ -30,15 +35,24 @@ extern "C" {
     return size;
   }
 
-  RowBatchReaderBox* open_row_batch_reader(MemorySourceBox* src, int64_t pos) {
+  ArrowResult* open_row_batch_reader(MemorySourceBox* src, int64_t pos) {
+    ArrowResult* result = new ArrowResult;
+    result->status = new StatusBox;
+
     std::shared_ptr<RowBatchReader> sp;
-    Status status = ipc::RowBatchReader::Open(src->p, pos, &sp);
+    result->status->status = ipc::RowBatchReader::Open(src->p, pos, &sp);
 //    assert(status.ok());
 
-    RowBatchReaderBox* reader = new RowBatchReaderBox;
-    reader->sp = sp;
-    reader->p = sp.get();
-    return reader;
+    if (result->status->status.ok()) {
+      RowBatchReaderBox* reader = new RowBatchReaderBox;
+      reader->sp = sp;
+      reader->p = sp.get();
+      result->result = reader;
+    } else {
+      result->result = nullptr;
+    }
+
+    return result;
   }
 
   void release_row_batch_reader(RowBatchReaderBox* reader) {
@@ -56,6 +70,12 @@ extern "C" {
     row_batch->sp = sp;
     row_batch->p = sp.get();
     return row_batch;
+  }
+
+  void release_arrow_result(ArrowResult* result) {
+    if (result) {
+      delete result;
+    }
   }
 }
 

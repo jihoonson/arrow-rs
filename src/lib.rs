@@ -21,6 +21,7 @@ mod benchmarks {
   use std::fs::File;
   use std::slice;
   use test::Bencher;
+  use std::mem;
 
   use table;
   use ty;
@@ -68,7 +69,13 @@ mod benchmarks {
       let src = memory::open_mmap_src(CString::new(file_name).unwrap().as_ptr(),
                                       memory::AccessMode::READ_ONLY);
 
-      let reader = adapter::c_api::open_row_batch_reader(src, header_pos);
+      let result = adapter::c_api::open_row_batch_reader(src, header_pos);
+      assert!(status::ok((*result).status()));
+      status::release_status((*result).status());
+
+      let reader: adapter::c_api::RawRowBatchReaderPtr = mem::transmute((*result).result());
+      adapter::c_api::release_arrow_result(result);
+
       let row_batch = adapter::c_api::get_row_batch(reader, schema);
 
       let col = table::row_batch_column(row_batch, 0);
@@ -133,7 +140,10 @@ mod benchmarks {
     src.close();
 
     let src = MemoryMappedSource::open(String::from(file_name), memory::AccessMode::READ_ONLY);
-    let reader = adapter::RowBatchReader::open(&src, header_pos);
+    let reader = match adapter::RowBatchReader::open(&src, header_pos) {
+      Ok(reader) => reader,
+      Err(e) => panic!("Failed to open RowBatchReader: {}", e.message())
+    };
     let row_batch = reader.read(&schema);
     let key_col: I32Array = row_batch.column(0);
     let payload_col: F32Array = row_batch.column(1);

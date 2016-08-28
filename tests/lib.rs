@@ -232,9 +232,7 @@ mod tests {
     assert_eq!(ty_provider.u8(), &array.data_type());
     assert_eq!(32, array.len());
 
-    for i in 0..32 {
-      assert_eq!(i as u8, array.value(i));
-    }
+    assert_eq!(values.as_slice(), array.as_slice());
   }
 
   #[test]
@@ -503,6 +501,8 @@ mod tests {
 
   #[test]
   fn test_raw_adapter() {
+    use std::mem;
+
     let file_name = "test_raw_adapter.dat";
     unsafe {
       let pool = memory_pool::default_mem_pool();
@@ -538,7 +538,14 @@ mod tests {
       let src = memory::open_mmap_src(CString::new(file_name).unwrap().as_ptr(),
                                       memory::AccessMode::READ_ONLY);
 
-      let reader = adapter::c_api::open_row_batch_reader(src, header_pos);
+//      let reader = adapter::c_api::open_row_batch_reader(src, header_pos);
+      let result = adapter::c_api::open_row_batch_reader(src, header_pos);
+      assert!(status::ok((*result).status()));
+      status::release_status((*result).status());
+
+      let reader: adapter::c_api::RawRowBatchReaderPtr = mem::transmute((*result).result());
+      adapter::c_api::release_arrow_result(result);
+
       let row_batch = adapter::c_api::get_row_batch(reader, schema);
 
       let col = table::row_batch_column(row_batch, 0);
@@ -608,7 +615,10 @@ mod tests {
 
     // read row batch
     let src = MemoryMappedSource::open(String::from(file_name), memory::AccessMode::READ_ONLY);
-    let batch_reader = RowBatchReader::open(&src, header_pos);
+    let batch_reader = match adapter::RowBatchReader::open(&src, header_pos) {
+      Ok(reader) => reader,
+      Err(e) => panic!("Failed to open RowBatchReader: {}", e.message())
+    };
     let row_batch = batch_reader.read(&schema);
     let col = row_batch.column(0);
     assert_eq!(arrays[0], col);

@@ -1,6 +1,10 @@
 use ipc::memory::{MemoryMappedSource, MemorySource};
 use table::RowBatch;
 use ty::Schema;
+use common::status::{ArrowError, RawStatusPtr};
+use common::status;
+
+use std::mem;
 
 //pub struct RowBatchWriter {
 //  mem_src: RawMemoryMappedSourceMutPtr,
@@ -31,9 +35,22 @@ pub struct RowBatchReader {
 }
 
 impl RowBatchReader {
-  pub fn open(src: &MemoryMappedSource, pos: i64) -> RowBatchReader {
-    RowBatchReader {
-      raw_reader: unsafe { c_api::open_row_batch_reader(src.raw_source(), pos) }
+  pub fn open(src: &MemoryMappedSource, pos: i64) -> Result<RowBatchReader, ArrowError> {
+    unsafe {
+      let raw_arrow_result = c_api::open_row_batch_reader(src.raw_source(), pos);
+      let raw_status = (*raw_arrow_result).status;
+      let raw_result = (*raw_arrow_result).result;
+      c_api::release_arrow_result(raw_arrow_result);
+
+      if status::ok(raw_status) {
+        Ok(
+          RowBatchReader {
+            raw_reader: mem::transmute(raw_result)
+          }
+        )
+      } else {
+        Err(ArrowError::new(raw_status))
+      }
     }
   }
 
@@ -48,10 +65,30 @@ impl Drop for RowBatchReader {
   }
 }
 
+#[repr(C)]
+pub struct RawArrowResult {
+  result: *const u8,
+  status: RawStatusPtr
+}
+
+impl RawArrowResult {
+  pub fn result(&self) -> *const u8 {
+    self.result
+  }
+
+  pub fn status(&self) -> RawStatusPtr {
+    self.status
+  }
+}
+
+pub type RawArrowResultPtr = *const RawArrowResult;
+
 pub mod c_api {
   use ipc::memory::RawMemoryMappedSourceMutPtr;
   use table::RawRowBatchPtr;
   use ty::RawSchemaPtr;
+
+  use super::RawArrowResultPtr;
 
   pub enum RawRowBatchReader {}
 
@@ -61,8 +98,10 @@ pub mod c_api {
     pub fn write_row_batch(src: RawMemoryMappedSourceMutPtr, batch: RawRowBatchPtr, pos: i64, recur_depth: i32) -> i64;
     pub fn get_row_batch_size(batch: RawRowBatchPtr) -> i64;
 
-    pub fn open_row_batch_reader(src: RawMemoryMappedSourceMutPtr, pos: i64) -> RawRowBatchReaderPtr;
+    pub fn open_row_batch_reader(src: RawMemoryMappedSourceMutPtr, pos: i64) -> RawArrowResultPtr;
     pub fn release_row_batch_reader(reader: RawRowBatchReaderPtr);
     pub fn get_row_batch(reader: RawRowBatchReaderPtr, schema: RawSchemaPtr) -> RawRowBatchPtr;
+
+    pub fn release_arrow_result(result: RawArrowResultPtr);
   }
 }

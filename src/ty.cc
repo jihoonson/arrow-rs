@@ -181,7 +181,7 @@ FieldBox* get_schema_field(SchemaBox* schema, int i) {
 }
 
 int schema_size(SchemaBox* schema) {
-  schema->p->num_fields();
+  return schema->p->num_fields();
 }
 
 bool schema_equals(SchemaBox* s1, SchemaBox* s2) {
