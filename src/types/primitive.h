@@ -10,48 +10,48 @@
 
 using namespace arrow;
 
-#define RAW_DATA_FUNC_DECL(NAME, TYPE, RS_TYPE)       \
-  const TYPE* RS_TYPE##_arr_raw_data(ArrayBox* arr) {        \
-    return ((NAME*)arr->p)->raw_data();               \
+#define RAW_DATA_FUNC_DECL(NAME, TYPE, RS_TYPE)             \
+  const TYPE* RS_TYPE##_arr_raw_data(ArrayBox* arr) {       \
+    return ((NAME*)arr->p)->raw_data();                     \
   }
 
-#define VALUE_FUNC_DECL(NAME, TYPE, RS_TYPE)          \
-  TYPE RS_TYPE##_arr_value(ArrayBox* arr, int i) {      \
-    return ((NAME*)arr->p)->Value(i);                 \
+#define VALUE_FUNC_DECL(NAME, TYPE, RS_TYPE)                \
+  TYPE RS_TYPE##_arr_value(ArrayBox* arr, int i) {          \
+    return reinterpret_cast<NAME*>(arr->p)->Value((int)i);  \
   }
 
-#define NEW_ARRAY_BUILDER_DECL(NAME, RS_TYPE)       \
-  NAME* new_##RS_TYPE##_arr_builder(MemoryPool* pool, DataTypeBox* type) {   \
-    return new NAME(pool, type->sp);                          \
+#define NEW_ARRAY_BUILDER_DECL(NAME, RS_TYPE)                               \
+  NAME* new_##RS_TYPE##_arr_builder(MemoryPool* pool, DataTypeBox* type) {  \
+    return new NAME(pool, type->sp);                                        \
   }
 
-#define INIT_ARRAY_BUILDER_DECL(NAME, RS_TYPE)      \
+#define INIT_ARRAY_BUILDER_DECL(NAME, RS_TYPE)                                \
   StatusBox* init_##RS_TYPE##_arr_builder(NAME* builder, int32_t capacity) {  \
-    StatusBox* box = new StatusBox; \
-    box->status = builder->Init(capacity);  \
-    return box; \
+    StatusBox* box = new StatusBox;                                           \
+    box->status = builder->Init(capacity);                                    \
+    return box;                                                               \
   }
 
-#define APPEND_ARRAY_BUILDER_DECL(NAME, TYPE, RS_TYPE)    \
+#define APPEND_ARRAY_BUILDER_DECL(NAME, TYPE, RS_TYPE)                                                                        \
   StatusBox* append_##RS_TYPE##_arr_builder(NAME* builder, const TYPE* values, int32_t length, const uint8_t* valid_bytes) {  \
-    StatusBox* box = new StatusBox; \
-    box->status = builder->Append(values, length, valid_bytes); \
-    return box; \
+    StatusBox* box = new StatusBox;                                                                                           \
+    box->status = builder->Append(values, length, valid_bytes);                                                               \
+    return box;                                                                                                               \
   }
 
-#define FINISH_ARRAY_BUILDER_DECL(NAME, RS_TYPE)  \
+#define FINISH_ARRAY_BUILDER_DECL(NAME, RS_TYPE)            \
   ArrayBox* finish_##RS_TYPE##_arr_builder(NAME* builder) { \
-    ArrayBox* arr = new ArrayBox; \
-    arr->sp = builder->Finish();  \
-    arr->p = arr->sp.get(); \
-    return arr; \
+    ArrayBox* arr = new ArrayBox;                           \
+    arr->sp = builder->Finish();                            \
+    arr->p = arr->sp.get();                                 \
+    return arr;                                             \
   }
 
-#define RELEASE_ARRAY_BUILDER_DECL(NAME, RS_TYPE) \
-  void release_##RS_TYPE##_arr_builder(NAME* builder) { \
-    if (builder) {  \
-      delete builder; \
-    } \
+#define RELEASE_ARRAY_BUILDER_DECL(NAME, RS_TYPE)           \
+  void release_##RS_TYPE##_arr_builder(NAME* builder) {     \
+    if (builder) {                                          \
+      delete builder;                                       \
+    }                                                       \
   }
 
 extern "C" {
