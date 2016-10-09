@@ -10,8 +10,8 @@
 using namespace arrow;
 
 struct RowBatchBox {
-  std::shared_ptr<RowBatch> sp;
-  RowBatch* p;
+  std::shared_ptr<RecordBatch> sp;
+  RecordBatch* p;
 };
 
 struct TableBox {

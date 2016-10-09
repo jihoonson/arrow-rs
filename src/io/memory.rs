@@ -7,8 +7,9 @@ use std::ffi::CString;
 
 #[repr(C)]
 pub enum AccessMode {
-  READ_ONLY,
-  READ_WRITE
+  READ,
+  WRITE,
+  READWRITE
 }
 
 pub enum MemorySource {

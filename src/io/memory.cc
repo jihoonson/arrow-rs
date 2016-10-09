@@ -1,8 +1,8 @@
 #include "memory.h"
 
-MemorySourceBox* open_mmap_src(const char* path, MemorySource::AccessMode mode) {
-  std::shared_ptr<MemoryMappedSource> out;
-  Status s = MemoryMappedSource::Open(std::string(path), mode, &out);
+MemorySourceBox* open_mmap_src(const char* path, FileMode::type mode) {
+  std::shared_ptr<MemoryMappedFile> out;
+  Status s = MemoryMappedFile::Open(std::string(path), mode, &out);
 //  assert(s.ok());
 
   MemorySourceBox* mm_src = new MemorySourceBox;
@@ -36,10 +36,12 @@ BufferBox* read_at_mmap_src(MemorySourceBox* src, int64_t position, int64_t nbyt
 
 StatusBox* write_mmap_src(MemorySourceBox* src, int64_t position, const uint8_t* data, int64_t nbytes) {
   StatusBox* status = new StatusBox;
-  status->status = src->p->Write(position, data, nbytes);
+  status->status = src->p->WriteAt(position, data, nbytes);
   return status;
 }
 
 int64_t mmap_src_size(MemorySourceBox* src) {
-  return src->p->Size();
+  int64_t size;
+  Status status = src->p->GetSize(&size);
+  return size;
 }

@@ -8,7 +8,7 @@ RowBatchBox* new_row_batch(SchemaBox* schema, int num_rows, ArrayBox* arrays[], 
   }
 
   RowBatchBox* row_batch = new RowBatchBox;
-  row_batch->sp = std::make_shared<RowBatch>(schema->sp, num_rows, arr_vec);
+  row_batch->sp = std::make_shared<RecordBatch>(schema->sp, num_rows, arr_vec);
   row_batch->p = row_batch->sp.get();
 
   return row_batch;

@@ -13,6 +13,7 @@ pub mod buffer;
 pub mod column;
 pub mod table;
 pub mod ipc;
+pub mod io;
 
 mod benchmarks {
   use std::ffi::{CString, CStr};
@@ -26,7 +27,7 @@ mod benchmarks {
   use table;
   use ty;
   use array;
-  use ipc::memory;
+  use io::memory;
   use ipc::adapter;
   use types::primitive;
   use common::memory_pool;
@@ -58,7 +59,7 @@ mod benchmarks {
       f.sync_all().unwrap();
 
       let src = memory::open_mmap_src(CString::new(file_name).unwrap().as_ptr(),
-                                      memory::AccessMode::READ_WRITE);
+                                      memory::AccessMode::READWRITE);
       let header_pos = adapter::c_api::write_row_batch(src, row_batch, 0, 64);
 
       let s = memory::close_mmap_src(src);
@@ -67,7 +68,7 @@ mod benchmarks {
       table::release_row_batch(row_batch);
 
       let src = memory::open_mmap_src(CString::new(file_name).unwrap().as_ptr(),
-                                      memory::AccessMode::READ_ONLY);
+                                      memory::AccessMode::READ);
 
       let result = adapter::c_api::open_row_batch_reader(src, header_pos);
       assert!(status::ok((*result).status()));
@@ -109,7 +110,7 @@ mod benchmarks {
     use ty::{DataTypeProvider, Schema, Field};
     use types::primitive::{I32Array, F32Array, I32ArrayBuilder, F32ArrayBuilder, PrimitiveArray};
     use table::RowBatch;
-    use ipc::memory::MemoryMappedSource;
+    use io::memory::MemoryMappedSource;
     use array::Array;
 
     let type_provider = DataTypeProvider::new();
@@ -135,11 +136,11 @@ mod benchmarks {
     f.set_len(batch_size as u64).unwrap();
     f.sync_all().unwrap();
 
-    let src = MemoryMappedSource::open(String::from(file_name), memory::AccessMode::READ_WRITE);
+    let src = MemoryMappedSource::open(String::from(file_name), memory::AccessMode::READWRITE);
     let header_pos = adapter::write_row_batch(&src, &row_batch, 0);
     src.close();
 
-    let src = MemoryMappedSource::open(String::from(file_name), memory::AccessMode::READ_ONLY);
+    let src = MemoryMappedSource::open(String::from(file_name), memory::AccessMode::READ);
     let reader = match adapter::RowBatchReader::open(&src, header_pos) {
       Ok(reader) => reader,
       Err(e) => panic!("Failed to open RowBatchReader: {}", e.message())

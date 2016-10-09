@@ -1,4 +1,4 @@
-use ipc::memory::{MemoryMappedSource, MemorySource};
+use io::memory::{MemoryMappedSource, MemorySource};
 use table::RowBatch;
 use ty::Schema;
 use common::status::{ArrowError, RawStatusPtr};
@@ -84,7 +84,7 @@ impl RawArrowResult {
 pub type RawArrowResultPtr = *const RawArrowResult;
 
 pub mod c_api {
-  use ipc::memory::RawMemoryMappedSourceMutPtr;
+  use io::memory::RawMemoryMappedSourceMutPtr;
   use table::RawRowBatchPtr;
   use ty::RawSchemaPtr;
 

@@ -20,7 +20,7 @@ mod tests {
   use arrow::table;
   use arrow::ty;
   use arrow::array;
-  use arrow::ipc::memory;
+  use arrow::io::memory;
   use arrow::ipc::adapter;
   use arrow::types::primitive;
   use arrow::common::memory_pool;
@@ -435,7 +435,7 @@ mod tests {
 
     unsafe {
       let src = memory::open_mmap_src(CString::new(file_name).unwrap().as_ptr(),
-                                      memory::AccessMode::READ_WRITE);
+                                      memory::AccessMode::READWRITE);
       let values: Vec<u8> = (0..32).collect();
       let origin = values.clone();
       let s = memory::write_mmap_src(src, 0, values.as_ptr(), 32);
@@ -448,7 +448,7 @@ mod tests {
       memory::release_mmap_src(src);
 
       let src = memory::open_mmap_src(CString::new(file_name).unwrap().as_ptr(),
-                                      memory::AccessMode::READ_ONLY);
+                                      memory::AccessMode::READ);
       let buf = memory::read_at_mmap_src(src, 0, 32);
       let v = slice::from_raw_parts(buffer::buf_data(buf), 32);
       assert_eq!(&origin, &v);
@@ -466,7 +466,7 @@ mod tests {
   #[test]
   fn test_mem_src() {
     use arrow::buffer::Buffer;
-    use arrow::ipc::memory::MemoryMappedSource;
+    use arrow::io::memory::MemoryMappedSource;
 
     let file_name = "test_mem_src.dat";
     let mut f = File::create(file_name).unwrap();
@@ -476,7 +476,7 @@ mod tests {
     let values: Vec<u8> = (0..32).collect();
     let origin = values.clone();
 
-    let src = MemoryMappedSource::open(String::from(file_name), memory::AccessMode::READ_WRITE);
+    let src = MemoryMappedSource::open(String::from(file_name), memory::AccessMode::READWRITE);
     let src = match src.write(0, values.as_ptr(), 32) {
       Ok(src) => src,
       Err(e) => panic!("write failed: {}", e.message())
@@ -486,7 +486,7 @@ mod tests {
       Err(e) => panic!("close failed: {}", e.message())
     };
 
-    let src = MemoryMappedSource::open(String::from(file_name), memory::AccessMode::READ_ONLY);
+    let src = MemoryMappedSource::open(String::from(file_name), memory::AccessMode::READ);
     let buf = src.read(0, 32);
     let s = unsafe { slice::from_raw_parts(buf.data(), 32) };
     assert_eq!(&origin, &s);
@@ -526,7 +526,7 @@ mod tests {
       f.sync_all().unwrap();
 
       let src = memory::open_mmap_src(CString::new(file_name).unwrap().as_ptr(),
-                                      memory::AccessMode::READ_WRITE);
+                                      memory::AccessMode::READWRITE);
       let header_pos = adapter::c_api::write_row_batch(src, row_batch, 0, 64);
 
       let s = memory::close_mmap_src(src);
@@ -536,7 +536,7 @@ mod tests {
       table::release_row_batch(row_batch);
 
       let src = memory::open_mmap_src(CString::new(file_name).unwrap().as_ptr(),
-                                      memory::AccessMode::READ_ONLY);
+                                      memory::AccessMode::READ);
 
 //      let reader = adapter::c_api::open_row_batch_reader(src, header_pos);
       let result = adapter::c_api::open_row_batch_reader(src, header_pos);
@@ -571,7 +571,7 @@ mod tests {
   #[test]
   fn test_adapter() {
     use arrow::buffer::Buffer;
-    use arrow::ipc::memory::MemoryMappedSource;
+    use arrow::io::memory::MemoryMappedSource;
     use arrow::common::memory_pool::MemoryPool;
     use arrow::ty::{DataTypeProvider, DataType, Field, Schema};
     use arrow::types::primitive::{F32ArrayBuilder, I32ArrayBuilder, PrimitiveArray};
@@ -605,7 +605,7 @@ mod tests {
     f.sync_all().unwrap();
 
     // write row batch
-    let src = MemoryMappedSource::open(String::from(file_name), memory::AccessMode::READ_WRITE);
+    let src = MemoryMappedSource::open(String::from(file_name), memory::AccessMode::READWRITE);
     let header_pos = adapter::write_row_batch(&src, &row_batch, 0);
 
     let src = match src.close() {
@@ -614,7 +614,7 @@ mod tests {
     };
 
     // read row batch
-    let src = MemoryMappedSource::open(String::from(file_name), memory::AccessMode::READ_ONLY);
+    let src = MemoryMappedSource::open(String::from(file_name), memory::AccessMode::READ);
     let batch_reader = match adapter::RowBatchReader::open(&src, header_pos) {
       Ok(reader) => reader,
       Err(e) => panic!("Failed to open RowBatchReader: {}", e.message())

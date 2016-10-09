@@ -1,20 +1,21 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include "arrow/ipc/memory.h"
+#include "arrow/io/memory.h"
+#include "arrow/io/interfaces.h"
 #include "../common/status.h"
 #include "../buffer.h"
 
 using namespace arrow;
-using namespace ipc;
+using namespace io;
 
 struct MemorySourceBox {
-  std::shared_ptr<MemorySource> sp;
-  MemorySource* p;
+  std::shared_ptr<MemoryMappedFile> sp;
+  MemoryMappedFile* p;
 };
 
 extern "C" {
-  MemorySourceBox* open_mmap_src(const char* path, MemorySource::AccessMode mode);
+  MemorySourceBox* open_mmap_src(const char* path, FileMode::type mode);
 
   void release_mmap_src(MemorySourceBox* src);
 
