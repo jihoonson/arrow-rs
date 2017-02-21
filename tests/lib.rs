@@ -114,37 +114,37 @@ mod tests {
     assert_eq!(schema, schema2);
   }
 
-  #[test]
-  fn test_raw_buffer() {
-
-    unsafe {
-      let pool = memory_pool::default_mem_pool();
-      let buf_builder = buffer::new_buf_builder(pool);
-      let val: u8 = 10;
-
-      let s = buffer::raw_append_buf_builder(buf_builder, &val, 1);
-      assert!(status::ok(s));
-      status::release_status(s);
-
-      let s = buffer::resize_buf_builder(buf_builder, 100);
-      assert!(status::ok(s));
-      status::release_status(s);
-
-      assert_eq!(1, buffer::buf_builder_len(buf_builder));
-      assert_eq!(128, buffer::buf_builder_capa(buf_builder));
-
-      let buf = buffer::finish_buf_builder(buf_builder);
-      assert_eq!(100, buffer::buf_size(buf));
-
-      let s = buffer::resize_buf(buf, 50);
-      assert!(status::ok(s));
-      assert_eq!(50, buffer::buf_size(buf));
-      assert_eq!(128, buffer::buf_capa(buf));
-
-      buffer::release_buf(buf);
-      buffer::release_buf_builder(buf_builder);
-    }
-  }
+//  #[test]
+//  fn test_raw_buffer() {
+//
+//    unsafe {
+//      let pool = memory_pool::default_mem_pool();
+//      let buf_builder = buffer::new_buf_builder(pool);
+//      let val: u8 = 10;
+//
+//      let s = buffer::raw_append_buf_builder(buf_builder, &val, 1);
+//      assert!(status::ok(s));
+//      status::release_status(s);
+//
+//      let s = buffer::resize_buf_builder(buf_builder, 100);
+//      assert!(status::ok(s));
+//      status::release_status(s);
+//
+//      assert_eq!(1, buffer::buf_builder_len(buf_builder));
+//      assert_eq!(128, buffer::buf_builder_capa(buf_builder));
+//
+//      let buf = buffer::finish_buf_builder(buf_builder);
+//      assert_eq!(100, buffer::buf_size(buf));
+//
+//      let s = buffer::resize_buf(buf, 50);
+//      assert!(status::ok(s));
+//      assert_eq!(50, buffer::buf_size(buf));
+//      assert_eq!(128, buffer::buf_capa(buf));
+//
+//      buffer::release_buf(buf);
+//      buffer::release_buf_builder(buf_builder);
+//    }
+//  }
 
   #[test]
   fn test_buffer() {
@@ -177,39 +177,39 @@ mod tests {
     assert_eq!(256, buf.capacity());
   }
 
-  #[test]
-  fn test_raw_array() {
-
-    unsafe {
-      let pool = memory_pool::default_mem_pool();
-      let mem_before = memory_pool::num_bytes_alloc(pool);
-
-      let uint8 = ty::new_primitive_type(ty::Ty::UINT8);
-      let builder = primitive::new_u8_arr_builder(pool, uint8);
-      let values: Vec<u8> = (0..32).collect();
-
-      let s = primitive::append_u8_arr_builder(builder, values.as_ptr(), 32, ptr::null());
-      assert!(status::ok(s));
-      status::release_status(s);
-
-      let arr = primitive::finish_u8_arr_builder(builder);
-
-      let u8_ty = ty::new_primitive_type(ty::Ty::UINT8);
-      assert!(ty::data_type_equals(u8_ty, array::arr_type(arr)));
-      ty::release_data_type(u8_ty);
-
-      assert_eq!(32, array::arr_len(arr));
-
-      for i in 0..32 {
-        assert_eq!(i as u8, primitive::u8_arr_value(arr, i));
-      }
-
-      array::release_arr(arr);
-
-      // FIXME: using the single memory pool makes difficult to verify the amount of allocated memory
-//      assert_eq!(mem_before, memory_pool::num_bytes_alloc(pool));
-    }
-  }
+//  #[test]
+//  fn test_raw_array() {
+//
+//    unsafe {
+//      let pool = memory_pool::default_mem_pool();
+//      let mem_before = memory_pool::num_bytes_alloc(pool);
+//
+//      let uint8 = ty::new_primitive_type(ty::Ty::UINT8);
+//      let builder = primitive::new_u8_arr_builder(pool, uint8);
+//      let values: Vec<u8> = (0..32).collect();
+//
+//      let s = primitive::append_u8_arr_builder(builder, values.as_ptr(), 32, ptr::null());
+//      assert!(status::ok(s));
+//      status::release_status(s);
+//
+//      let arr = primitive::finish_u8_arr_builder(builder);
+//
+//      let u8_ty = ty::new_primitive_type(ty::Ty::UINT8);
+//      assert!(ty::data_type_equals(u8_ty, array::arr_type(arr)));
+//      ty::release_data_type(u8_ty);
+//
+//      assert_eq!(32, array::arr_len(arr));
+//
+//      for i in 0..32 {
+//        assert_eq!(i as u8, primitive::u8_arr_value(arr, i));
+//      }
+//
+//      array::release_arr(arr);
+//
+//      // FIXME: using the single memory pool makes difficult to verify the amount of allocated memory
+////      assert_eq!(mem_before, memory_pool::num_bytes_alloc(pool));
+//    }
+//  }
 
   #[test]
   fn test_array() {
@@ -235,38 +235,38 @@ mod tests {
     assert_eq!(values.as_slice(), array.as_slice());
   }
 
-  #[test]
-  fn test_raw_column() {
-
-    unsafe {
-      let pool = memory_pool::default_mem_pool();
-      let f32_ty = ty::new_primitive_type(ty::Ty::FLOAT);
-      let f1 = ty::new_field(CString::new("f1").unwrap().as_ptr(), f32_ty, false);
-      let values: Vec<f32> = (0..32).map(|i| i as f32).collect();
-      let builder = primitive::new_f32_arr_builder(pool, f32_ty);
-
-      let s = primitive::append_f32_arr_builder(builder, values.as_ptr(), 32, ptr::null());
-      assert!(status::ok(s));
-      status::release_status(s);
-
-      let arr = primitive::finish_f32_arr_builder(builder);
-      assert_eq!(32, array::arr_len(arr));
-
-      let col = column::new_column_from_arr(f1, arr);
-      assert_eq!(32, column::column_len(col));
-      assert_eq!(0, column::column_null_count(col));
-      assert!(ty::data_type_equals(f32_ty, column::column_type(col)));
-      let s = column::validate_column_data(col);
-      assert!(status::ok(s));
-      status::release_status(s);
-
-      column::release_column(col);
-
-      array::release_arr(arr);
-      ty::release_field(f1);
-      ty::release_data_type(f32_ty);
-    }
-  }
+//  #[test]
+//  fn test_raw_column() {
+//
+//    unsafe {
+//      let pool = memory_pool::default_mem_pool();
+//      let f32_ty = ty::new_primitive_type(ty::Ty::FLOAT);
+//      let f1 = ty::new_field(CString::new("f1").unwrap().as_ptr(), f32_ty, false);
+//      let values: Vec<f32> = (0..32).map(|i| i as f32).collect();
+//      let builder = primitive::new_f32_arr_builder(pool, f32_ty);
+//
+//      let s = primitive::append_f32_arr_builder(builder, values.as_ptr(), 32, ptr::null());
+//      assert!(status::ok(s));
+//      status::release_status(s);
+//
+//      let arr = primitive::finish_f32_arr_builder(builder);
+//      assert_eq!(32, array::arr_len(arr));
+//
+//      let col = column::new_column_from_arr(f1, arr);
+//      assert_eq!(32, column::column_len(col));
+//      assert_eq!(0, column::column_null_count(col));
+//      assert!(ty::data_type_equals(f32_ty, column::column_type(col)));
+//      let s = column::validate_column_data(col);
+//      assert!(status::ok(s));
+//      status::release_status(s);
+//
+//      column::release_column(col);
+//
+//      array::release_arr(arr);
+//      ty::release_field(f1);
+//      ty::release_data_type(f32_ty);
+//    }
+//  }
 
   #[test]
   fn test_column() {
@@ -296,35 +296,35 @@ mod tests {
     };
   }
 
-  #[test]
-  fn test_raw_row_batch() {
-    unsafe {
-      let pool = memory_pool::default_mem_pool();
-      let f32_ty = ty::new_primitive_type(ty::Ty::FLOAT);
-      let f1 = ty::new_field(CString::new("f1").unwrap().as_ptr(), f32_ty, false);
-      let fields = [f1];
-      let schema = ty::new_schema(1, &fields);
-      let values: Vec<f32> = (0..32).map(|i| i as f32).collect();
-
-      let builder = primitive::new_f32_arr_builder(pool, f32_ty);
-      let s = primitive::append_f32_arr_builder(builder, values.as_ptr(), 32, ptr::null());
-      status::release_status(s);
-      let arrs = [primitive::finish_f32_arr_builder(builder)];
-
-      let row_batch = table::new_row_batch(schema, 32, &arrs, 1);
-
-      assert!(ty::schema_equals(schema, table::row_batch_schema(row_batch)));
-      assert!(array::arr_equals(arrs[0], table::row_batch_column(row_batch, 0)));
-      assert_eq!(32, table::row_batch_num_rows(row_batch));
-      assert_eq!(1, table::row_batch_num_cols(row_batch));
-
-      table::release_row_batch(row_batch);
-      array::release_arr(arrs[0]);
-      ty::release_schema(schema);
-      ty::release_field(f1);
-      ty::release_data_type(f32_ty);
-    }
-  }
+//  #[test]
+//  fn test_raw_row_batch() {
+//    unsafe {
+//      let pool = memory_pool::default_mem_pool();
+//      let f32_ty = ty::new_primitive_type(ty::Ty::FLOAT);
+//      let f1 = ty::new_field(CString::new("f1").unwrap().as_ptr(), f32_ty, false);
+//      let fields = [f1];
+//      let schema = ty::new_schema(1, &fields);
+//      let values: Vec<f32> = (0..32).map(|i| i as f32).collect();
+//
+//      let builder = primitive::new_f32_arr_builder(pool, f32_ty);
+//      let s = primitive::append_f32_arr_builder(builder, values.as_ptr(), 32, ptr::null());
+//      status::release_status(s);
+//      let arrs = [primitive::finish_f32_arr_builder(builder)];
+//
+//      let row_batch = table::new_row_batch(schema, 32, &arrs, 1);
+//
+//      assert!(ty::schema_equals(schema, table::row_batch_schema(row_batch)));
+//      assert!(array::arr_equals(arrs[0], table::row_batch_column(row_batch, 0)));
+//      assert_eq!(32, table::row_batch_num_rows(row_batch));
+//      assert_eq!(1, table::row_batch_num_cols(row_batch));
+//
+//      table::release_row_batch(row_batch);
+//      array::release_arr(arrs[0]);
+//      ty::release_schema(schema);
+//      ty::release_field(f1);
+//      ty::release_data_type(f32_ty);
+//    }
+//  }
 
   #[test]
   fn test_row_batch() {
@@ -357,39 +357,39 @@ mod tests {
     assert_eq!(2, row_batch.column_num());
   }
 
-  #[test]
-  fn test_raw_table() {
-    unsafe {
-      let pool = memory_pool::default_mem_pool();
-      let f32_ty = ty::new_primitive_type(ty::Ty::FLOAT);
-      let f1 = ty::new_field(CString::new("f1").unwrap().as_ptr(), f32_ty, false);
-      let fields = [f1];
-      let schema = ty::new_schema(1, &fields);
-      let values: Vec<f32> = (0..32).map(|i| i as f32).collect();
-
-      let builder = primitive::new_f32_arr_builder(pool, f32_ty);
-      let s = primitive::append_f32_arr_builder(builder, values.as_ptr(), 32, ptr::null());
-      status::release_status(s);
-      let arrs = [primitive::finish_f32_arr_builder(builder)];
-      let cols = [column::new_column_from_arr(f1, arrs[0])];
-
-      let table = table::new_table(CString::new("t1").unwrap().as_ptr(), schema, &cols, 1);
-      assert!(ty::schema_equals(schema, table::table_schema(table)));
-      assert_eq!(1, table::table_num_cols(table));
-      assert_eq!(32, table::table_num_rows(table));
-      //      assert!(column::column_equals(cols[0], table::table_column(table, 0)));
-      let s = table::validate_table_cols(table);
-      assert!(status::ok(s));
-      status::release_status(s);
-
-      table::release_table(table);
-      column::release_column(cols[0]);
-      array::release_arr(arrs[0]);
-      ty::release_schema(schema);
-      ty::release_field(f1);
-      ty::release_data_type(f32_ty);
-    }
-  }
+//  #[test]
+//  fn test_raw_table() {
+//    unsafe {
+//      let pool = memory_pool::default_mem_pool();
+//      let f32_ty = ty::new_primitive_type(ty::Ty::FLOAT);
+//      let f1 = ty::new_field(CString::new("f1").unwrap().as_ptr(), f32_ty, false);
+//      let fields = [f1];
+//      let schema = ty::new_schema(1, &fields);
+//      let values: Vec<f32> = (0..32).map(|i| i as f32).collect();
+//
+//      let builder = primitive::new_f32_arr_builder(pool, f32_ty);
+//      let s = primitive::append_f32_arr_builder(builder, values.as_ptr(), 32, ptr::null());
+//      status::release_status(s);
+//      let arrs = [primitive::finish_f32_arr_builder(builder)];
+//      let cols = [column::new_column_from_arr(f1, arrs[0])];
+//
+//      let table = table::new_table(CString::new("t1").unwrap().as_ptr(), schema, &cols, 1);
+//      assert!(ty::schema_equals(schema, table::table_schema(table)));
+//      assert_eq!(1, table::table_num_cols(table));
+//      assert_eq!(32, table::table_num_rows(table));
+//      //      assert!(column::column_equals(cols[0], table::table_column(table, 0)));
+//      let s = table::validate_table_cols(table);
+//      assert!(status::ok(s));
+//      status::release_status(s);
+//
+//      table::release_table(table);
+//      column::release_column(cols[0]);
+//      array::release_arr(arrs[0]);
+//      ty::release_schema(schema);
+//      ty::release_field(f1);
+//      ty::release_data_type(f32_ty);
+//    }
+//  }
 
   #[test]
   fn test_table() {
@@ -499,74 +499,74 @@ mod tests {
     fs::remove_file(file_name).unwrap();
   }
 
-  #[test]
-  fn test_raw_adapter() {
-    use std::mem;
-
-    let file_name = "test_raw_adapter.dat";
-    unsafe {
-      let pool = memory_pool::default_mem_pool();
-      let f32_ty = ty::new_primitive_type(ty::Ty::FLOAT);
-      let f1 = ty::new_field(CString::new("f1").unwrap().as_ptr(), f32_ty, false);
-      let fields = [f1];
-      let schema = ty::new_schema(1, &fields);
-      let values: Vec<f32> = (0..32).map(|i| i as f32).collect();
-
-      let builder = primitive::new_f32_arr_builder(pool, f32_ty);
-      let s = primitive::append_f32_arr_builder(builder, values.as_ptr(), 32, ptr::null());
-      status::release_status(s);
-      let arrs = [primitive::finish_f32_arr_builder(builder)];
-
-      let row_batch = table::new_row_batch(schema, 32, &arrs, 1);
-
-      let batch_size = adapter::c_api::get_row_batch_size(row_batch);
-
-      let mut f = File::create(file_name).unwrap();
-      f.set_len(batch_size as u64).unwrap();
-      f.sync_all().unwrap();
-
-      let src = memory::open_mmap_src(CString::new(file_name).unwrap().as_ptr(),
-                                      memory::AccessMode::READWRITE);
-      let header_pos = adapter::c_api::write_row_batch(src, row_batch, 0, 64);
-
-      let s = memory::close_mmap_src(src);
-      assert!(status::ok(s));
-      status::release_status(s);
-      memory::release_mmap_src(src);
-      table::release_row_batch(row_batch);
-
-      let src = memory::open_mmap_src(CString::new(file_name).unwrap().as_ptr(),
-                                      memory::AccessMode::READ);
-
-//      let reader = adapter::c_api::open_row_batch_reader(src, header_pos);
-      let result = adapter::c_api::open_row_batch_reader(src, header_pos);
-      assert!(status::ok((*result).status()));
-      status::release_status((*result).status());
-
-      let reader: adapter::c_api::RawRowBatchReaderPtr = mem::transmute((*result).result());
-      adapter::c_api::release_arrow_result(result);
-
-      let row_batch = adapter::c_api::get_row_batch(reader, schema);
-
-      let col = table::row_batch_column(row_batch, 0);
-      assert!(array::arr_equals(arrs[0], col));
-
-      let s = memory::close_mmap_src(src);
-      assert!(status::ok(s));
-      status::release_status(s);
-      memory::release_mmap_src(src);
-
-      adapter::c_api::release_row_batch_reader(reader);
-      table::release_row_batch(row_batch);
-
-      array::release_arr(arrs[0]);
-      ty::release_schema(schema);
-      ty::release_field(f1);
-      ty::release_data_type(f32_ty);
-    }
-
-    fs::remove_file(file_name).unwrap();
-  }
+//  #[test]
+//  fn test_raw_adapter() {
+//    use std::mem;
+//
+//    let file_name = "test_raw_adapter.dat";
+//    unsafe {
+//      let pool = memory_pool::default_mem_pool();
+//      let f32_ty = ty::new_primitive_type(ty::Ty::FLOAT);
+//      let f1 = ty::new_field(CString::new("f1").unwrap().as_ptr(), f32_ty, false);
+//      let fields = [f1];
+//      let schema = ty::new_schema(1, &fields);
+//      let values: Vec<f32> = (0..32).map(|i| i as f32).collect();
+//
+//      let builder = primitive::new_f32_arr_builder(pool, f32_ty);
+//      let s = primitive::append_f32_arr_builder(builder, values.as_ptr(), 32, ptr::null());
+//      status::release_status(s);
+//      let arrs = [primitive::finish_f32_arr_builder(builder)];
+//
+//      let row_batch = table::new_row_batch(schema, 32, &arrs, 1);
+//
+//      let batch_size = adapter::c_api::get_row_batch_size(row_batch);
+//
+//      let mut f = File::create(file_name).unwrap();
+//      f.set_len(batch_size as u64).unwrap();
+//      f.sync_all().unwrap();
+//
+//      let src = memory::open_mmap_src(CString::new(file_name).unwrap().as_ptr(),
+//                                      memory::AccessMode::READWRITE);
+//      let header_pos = adapter::c_api::write_row_batch(src, row_batch, 0, 64);
+//
+//      let s = memory::close_mmap_src(src);
+//      assert!(status::ok(s));
+//      status::release_status(s);
+//      memory::release_mmap_src(src);
+//      table::release_row_batch(row_batch);
+//
+//      let src = memory::open_mmap_src(CString::new(file_name).unwrap().as_ptr(),
+//                                      memory::AccessMode::READ);
+//
+////      let reader = adapter::c_api::open_row_batch_reader(src, header_pos);
+//      let result = adapter::c_api::open_row_batch_reader(src, header_pos);
+//      assert!(status::ok((*result).status()));
+//      status::release_status((*result).status());
+//
+//      let reader: adapter::c_api::RawRowBatchReaderPtr = mem::transmute((*result).result());
+//      adapter::c_api::release_arrow_result(result);
+//
+//      let row_batch = adapter::c_api::get_row_batch(reader, schema);
+//
+//      let col = table::row_batch_column(row_batch, 0);
+//      assert!(array::arr_equals(arrs[0], col));
+//
+//      let s = memory::close_mmap_src(src);
+//      assert!(status::ok(s));
+//      status::release_status(s);
+//      memory::release_mmap_src(src);
+//
+//      adapter::c_api::release_row_batch_reader(reader);
+//      table::release_row_batch(row_batch);
+//
+//      array::release_arr(arrs[0]);
+//      ty::release_schema(schema);
+//      ty::release_field(f1);
+//      ty::release_data_type(f32_ty);
+//    }
+//
+//    fs::remove_file(file_name).unwrap();
+//  }
 
   #[test]
   fn test_adapter() {

@@ -3,11 +3,18 @@ use std::ops::Drop;
 use std::string::String;
 use std::ffi::CStr;
 
+cxx_inline! {
+  #include "arrow/util/status.h"
+
+  using namespace arrow;
+  using namespace std;
+}
+
 #[macro_export]
 macro_rules! result_from_status {
   ($s:ident, $result:expr) => (
-    if unsafe { status::ok($s) } {
-      unsafe { status::release_status($s) };
+    if unsafe { cxx![($s: Status) -> bool { status.ok() }] } {
+//      unsafe { status::release_status($s) };
       Ok($result)
     } else {
       Err(ArrowError::new($s))
@@ -28,35 +35,25 @@ pub enum StatusCode {
     NotImplemented = 10,
 }
 
+pub enum Status {}
+
 pub struct ArrowError {
-  code: StatusCode,
-//  posix_code: i16,
-  message: String
+  status: Status
 }
 
 impl ArrowError {
-  pub fn new(status: RawStatusPtr) -> ArrowError {
-    unsafe {
-      let code = code(status);
-//      let posix_code = posix_code(status);
-      let bytes = CStr::from_ptr(message(status)).to_bytes();
-      let msg = String::from_utf8(Vec::from(bytes)).unwrap();
-      release_status(status); // TODO: consider more reliable way to handle the raw status pointer
-
-      ArrowError {
-        code: code,
-//        posix_code: posix_code,
-        message: msg
-      }
+  pub fn new(status: Status) -> ArrowError {
+    ArrowError {
+      status: status
     }
   }
 
-  pub fn code(&self) -> &StatusCode {
-    &self.code
+  pub fn code(&self) -> StatusCode {
+    unsafe { cxx![ (status: *const Status = &self.status) -> StatusCode { status->code() } ] }
   }
 
-  pub fn message(&self) -> &String {
-    &self.message
+  pub fn message(&self) -> String {
+    unsafe { cxx![ (status: *const Status = &self.status) -> String { status->message() } ] }
   }
 }
 

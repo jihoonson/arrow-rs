@@ -1,6 +1,8 @@
 #![feature(concat_idents)]
 #![feature(type_macros)]
 #![feature(test)]
+#![feature(plugin, libc)]
+#![plugin(rustcxx_plugin)]
 extern crate libc;
 extern crate test;
 
@@ -33,76 +35,76 @@ mod benchmarks {
   use common::memory_pool;
   use common::status;
 
-  #[bench]
-  fn bench_raw_adapter(b: &mut Bencher) {
-    let file_name = "bench_raw_adapter.dat";
-    unsafe {
-      let pool = memory_pool::default_mem_pool();
-      let f32_ty = ty::new_primitive_type(ty::Ty::FLOAT);
-      let f1 = ty::new_field(CString::new("f1").unwrap().as_ptr(), f32_ty, false);
-      let fields = [f1];
-      let schema = ty::new_schema(1, &fields);
-      let values: Vec<f32> = (0..1000000).map(|i| i as f32).collect();
-      let val_len = values.len() as i32;
-
-      let builder = primitive::new_f32_arr_builder(pool, f32_ty);
-      let s = primitive::append_f32_arr_builder(builder, values.as_ptr(), val_len, ptr::null());
-      status::release_status(s);
-      let arrs = [primitive::finish_f32_arr_builder(builder)];
-
-      let row_batch = table::new_row_batch(schema, val_len, &arrs, 1);
-
-      let batch_size = adapter::c_api::get_row_batch_size(row_batch);
-
-      let mut f = File::create(file_name).unwrap();
-      f.set_len(batch_size as u64).unwrap();
-      f.sync_all().unwrap();
-
-      let src = memory::open_mmap_src(CString::new(file_name).unwrap().as_ptr(),
-                                      memory::AccessMode::READWRITE);
-      let header_pos = adapter::c_api::write_row_batch(src, row_batch, 0, 64);
-
-      let s = memory::close_mmap_src(src);
-      status::release_status(s);
-      memory::release_mmap_src(src);
-      table::release_row_batch(row_batch);
-
-      let src = memory::open_mmap_src(CString::new(file_name).unwrap().as_ptr(),
-                                      memory::AccessMode::READ);
-
-      let result = adapter::c_api::open_row_batch_reader(src, header_pos);
-      assert!(status::ok((*result).status()));
-      status::release_status((*result).status());
-
-      let reader: adapter::c_api::RawRowBatchReaderPtr = mem::transmute((*result).result());
-      adapter::c_api::release_arrow_result(result);
-
-      let row_batch = adapter::c_api::get_row_batch(reader, schema);
-
-      let col = table::row_batch_column(row_batch, 0);
-
-      b.iter(|| {
-        let result = (0..val_len).filter(|i| {
-          let f = primitive::f32_arr_value(col, *i);
-          f >= 10000. && f < 100000.
-        }).map(|i| primitive::f32_arr_value(col, i)).collect::<Vec<f32>>();
-      });
-
-      let s = memory::close_mmap_src(src);
-      status::release_status(s);
-      memory::release_mmap_src(src);
-
-      adapter::c_api::release_row_batch_reader(reader);
-      table::release_row_batch(row_batch);
-
-      array::release_arr(arrs[0]);
-      ty::release_schema(schema);
-      ty::release_field(f1);
-      ty::release_data_type(f32_ty);
-    }
-
-    fs::remove_file(file_name).unwrap();
-  }
+//  #[bench]
+//  fn bench_raw_adapter(b: &mut Bencher) {
+//    let file_name = "bench_raw_adapter.dat";
+//    unsafe {
+//      let pool = memory_pool::default_mem_pool();
+//      let f32_ty = ty::new_primitive_type(ty::Ty::FLOAT);
+//      let f1 = ty::new_field(CString::new("f1").unwrap().as_ptr(), f32_ty, false);
+//      let fields = [f1];
+//      let schema = ty::new_schema(1, &fields);
+//      let values: Vec<f32> = (0..1000000).map(|i| i as f32).collect();
+//      let val_len = values.len() as i32;
+//
+//      let builder = primitive::new_f32_arr_builder(pool, f32_ty);
+//      let s = primitive::append_f32_arr_builder(builder, values.as_ptr(), val_len, ptr::null());
+//      status::release_status(s);
+//      let arrs = [primitive::finish_f32_arr_builder(builder)];
+//
+//      let row_batch = table::new_row_batch(schema, val_len, &arrs, 1);
+//
+//      let batch_size = adapter::c_api::get_row_batch_size(row_batch);
+//
+//      let mut f = File::create(file_name).unwrap();
+//      f.set_len(batch_size as u64).unwrap();
+//      f.sync_all().unwrap();
+//
+//      let src = memory::open_mmap_src(CString::new(file_name).unwrap().as_ptr(),
+//                                      memory::AccessMode::READWRITE);
+//      let header_pos = adapter::c_api::write_row_batch(src, row_batch, 0, 64);
+//
+//      let s = memory::close_mmap_src(src);
+//      status::release_status(s);
+//      memory::release_mmap_src(src);
+//      table::release_row_batch(row_batch);
+//
+//      let src = memory::open_mmap_src(CString::new(file_name).unwrap().as_ptr(),
+//                                      memory::AccessMode::READ);
+//
+//      let result = adapter::c_api::open_row_batch_reader(src, header_pos);
+//      assert!(status::ok((*result).status()));
+//      status::release_status((*result).status());
+//
+//      let reader: adapter::c_api::RawRowBatchReaderPtr = mem::transmute((*result).result());
+//      adapter::c_api::release_arrow_result(result);
+//
+//      let row_batch = adapter::c_api::get_row_batch(reader, schema);
+//
+//      let col = table::row_batch_column(row_batch, 0);
+//
+//      b.iter(|| {
+//        let result = (0..val_len).filter(|i| {
+//          let f = primitive::f32_arr_value(col, *i);
+//          f >= 10000. && f < 100000.
+//        }).map(|i| primitive::f32_arr_value(col, i)).collect::<Vec<f32>>();
+//      });
+//
+//      let s = memory::close_mmap_src(src);
+//      status::release_status(s);
+//      memory::release_mmap_src(src);
+//
+//      adapter::c_api::release_row_batch_reader(reader);
+//      table::release_row_batch(row_batch);
+//
+//      array::release_arr(arrs[0]);
+//      ty::release_schema(schema);
+//      ty::release_field(f1);
+//      ty::release_data_type(f32_ty);
+//    }
+//
+//    fs::remove_file(file_name).unwrap();
+//  }
 
   #[bench]
   fn bench_adapter(b: &mut Bencher) {

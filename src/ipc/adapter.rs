@@ -1,5 +1,5 @@
 use io::memory::{MemoryMappedSource, MemorySource};
-use table::RowBatch;
+use table::{RowBatch, RecordBatch};
 use ty::Schema;
 use common::status::{ArrowError, RawStatusPtr};
 use common::status;
@@ -56,6 +56,14 @@ impl RowBatchReader {
 
   pub fn read(&self, schema: &Schema) -> RowBatch {
     RowBatch::from_raw( unsafe { c_api::get_row_batch(self.raw_reader, schema.raw_schema()) } )
+  }
+}
+
+impl Iterator for RowBatchReader {
+  type Item = RowBatch;
+
+  fn next(&mut self) -> Option<RowBatch> {
+    unimplemented!()
   }
 }
 

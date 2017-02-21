@@ -12,6 +12,8 @@ use std::any::Any;
 #[macro_use]
 use common;
 
+pub enum RecordBatch {}
+
 pub struct RowBatch {
   raw_batch: RawRowBatchPtr
 }

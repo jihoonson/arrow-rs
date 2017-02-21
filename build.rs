@@ -1,4 +1,5 @@
 extern crate gcc;
+extern crate rustcxx_codegen;
 
 use std::path::Path;
 
@@ -37,4 +38,7 @@ fn main() {
       .file("src/io/memory.cc")
       .file("src/ipc/adapter.cc")
       .compile("libtargetwrapper.a");
+
+  rustcxx_codegen::build("src/common/status.rs");
+  rustcxx_codegen::build("src/common/memory_pool.rs");
 }

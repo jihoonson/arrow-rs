@@ -19,31 +19,31 @@ macro_rules! string_to_cstr {
 #[cfg(test)]
 mod tests {
 
-  #[test]
-  fn test_raw_mem_pool() {
-    use common::memory_pool;
-    use std::ptr;
-    use libc;
-    use common::status;
-    use std::mem;
-
-    unsafe {
-      let pool = memory_pool::default_mem_pool();
-      let buffer: *mut u8 = ptr::null_mut();
-
-      let init_mem_bytes = memory_pool::num_bytes_alloc(pool);
-
-      let status = memory_pool::mem_alloc(pool, buffer, 64);
-      assert!(status::ok(status));
-      status::release_status(status);
-      // FIXME: using the single memory pool makes difficult to verify the amount of allocated memory
-//      assert_eq!(init_mem_bytes + 64, memory_pool::num_bytes_alloc(pool));
-
-      memory_pool::mem_free(pool, buffer, 64);
-      // FIXME: using the single memory pool makes difficult to verify the amount of allocated memory
-//      assert_eq!(init_mem_bytes, memory_pool::num_bytes_alloc(pool));
-    }
-  }
+//  #[test]
+//  fn test_raw_mem_pool() {
+//    use common::memory_pool;
+//    use std::ptr;
+//    use libc;
+//    use common::status;
+//    use std::mem;
+//
+//    unsafe {
+//      let pool = memory_pool::default_mem_pool();
+//      let buffer: *mut u8 = ptr::null_mut();
+//
+//      let init_mem_bytes = memory_pool::num_bytes_alloc(pool);
+//
+//      let status = memory_pool::mem_alloc(pool, buffer, 64);
+//      assert!(status::ok(status));
+//      status::release_status(status);
+//      // FIXME: using the single memory pool makes difficult to verify the amount of allocated memory
+////      assert_eq!(init_mem_bytes + 64, memory_pool::num_bytes_alloc(pool));
+//
+//      memory_pool::mem_free(pool, buffer, 64);
+//      // FIXME: using the single memory pool makes difficult to verify the amount of allocated memory
+////      assert_eq!(init_mem_bytes, memory_pool::num_bytes_alloc(pool));
+//    }
+//  }
 
   #[test]
   fn test_mem_pool() {
