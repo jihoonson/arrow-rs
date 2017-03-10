@@ -14,6 +14,7 @@ pub mod column;
 pub mod table;
 pub mod ipc;
 pub mod io;
+pub mod native;
 
 mod benchmarks {
   use std::ffi::{CString, CStr};
